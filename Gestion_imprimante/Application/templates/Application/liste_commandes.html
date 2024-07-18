@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Liste des Commandes</title>
+</head>
+<body>
+    <h1>Liste des Commandes</h1>
+    <table>
+        <tr>
+            <th>Order ID</th>
+            <th>Date et Heure</th>
+            <th>Company Reference Number</th>
+            <th>Order Status</th>
+        </tr>
+        {% for commande in commandes %}
+        <tr>
+            <td>{{ commande.order_id }}</td>
+            <td>{{ commande.date_time }}</td>
+            <td>{{ commande.company_reference_number }}</td>
+            <td>{{ commande.order_status }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <a href="{% url 'ajouter_commande' %}">Ajouter une Commande</a>
+</body>
+</html>
