@@ -4,6 +4,9 @@
     <title>Liste des Commandes</title>
 </head>
 <body>
+    <div>
+        <a href="{% url 'logout' %}">Se Déconnecter</a>
+    </div>
     <h1>Liste des Commandes</h1>
     <table>
         <tr>
@@ -29,8 +32,10 @@
         </tr>
         {% endfor %}
     </table>
-    {% if user_role == 'assistant' %}
-    <a href="{% url 'ajouter_commande' %}">Ajouter une Commande</a>
-    {% endif %}
+    <div>
+        {% if user_role == 'assistant' %}
+        <a href="{% url 'ajouter_commande' %}">Ajouter une Commande</a>
+        {% endif %}
+    </div>
 </body>
 </html>

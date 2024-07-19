@@ -19,8 +19,7 @@ def login_view(request):
 
 @login_required
 def dashboard(request):
-    user_role = 'directeur' if request.user.groups.filter(name='Directeurs').exists() else 'assistant'
-    return render(request, 'Application/dashboard.html', {'user_role': user_role})
+    return redirect('liste_commandes')
 
 @login_required
 def liste_commandes(request):
@@ -31,7 +30,7 @@ def liste_commandes(request):
 @login_required
 def ajouter_commande(request):
     if not request.user.groups.filter(name='Assistants').exists():
-        return redirect('dashboard')
+        return redirect('liste_commandes')
     if request.method == 'POST':
         form = CommandeForm(request.POST)
         if form.is_valid():
@@ -62,7 +61,7 @@ def modifier_commande(request, pk):
 @login_required
 def generer_devis(request, pk):
     if not request.user.groups.filter(name='Directeurs').exists():
-        return redirect('dashboard')
+        return redirect('liste_commandes')
     commande = Commande.objects.get(pk=pk)
     # Logique pour générer le devis (PDF, etc.)
     return render(request, 'Application/generer_devis.html', {'commande': commande})
