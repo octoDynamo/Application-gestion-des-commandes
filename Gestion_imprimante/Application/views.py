@@ -1,13 +1,14 @@
+import os
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Commande
 from .forms import CommandeForm
-from django.http import JsonResponse
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from django.http import HttpResponse
-import os
 
 def login_view(request):
     if request.method == 'POST':
@@ -54,17 +55,8 @@ def supprimer_commande(request, pk):
 
 @login_required
 def modifier_commande(request, pk):
-    if not request.user.groups.filter(name='Directeurs').exists() and not request.user.groups.filter(name='Assistants').exists():
-        return redirect('liste_commandes')
     commande = Commande.objects.get(pk=pk)
-    if request.method == 'POST':
-        form = CommandeForm(request.POST, instance=commande)
-        if form.is_valid():
-            form.save()
-            return redirect('liste_commandes')
-    else:
-        form = CommandeForm(instance=commande)
-    return render(request, 'Application/modifier_commande.html', {'form': form})
+    return redirect('designation_commande', pk=commande.pk)
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
@@ -97,6 +89,45 @@ def designation_commande(request, pk):
     if request.method == 'POST':
         # Récupérer et traiter les options sélectionnées
         designation = request.POST.get('designation')
-        # Traitement de la désignation de la commande
-        return redirect('liste_commandes')
+        # Traitement des options sélectionnées
+        options = []
+        for i in range(1, 5):  # Ajustez la plage selon le nombre d'options
+            if request.POST.get(f'option{i}'):
+                format = request.POST.get(f'format{i}')
+                quantity = request.POST.get(f'quantity{i}')
+                paper_type = request.POST.get(f'paper_type{i}')
+                options.append({
+                    'option': f'Option {i}',
+                    'format': format,
+                    'quantity': quantity,
+                    'paper_type': paper_type
+                })
+
+        # Générer le PDF
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="fiche_de_travail.pdf"'
+        
+        p = canvas.Canvas(response, pagesize=letter)
+        p.drawString(100, 750, f"Numéro de dossier: {commande.order_id}")
+        p.drawString(100, 735, f"Date: {commande.date_time}")
+        p.drawString(100, 720, f"Nom du client: {commande.company_reference_number}")
+        p.drawString(100, 705, f"Désignation: {designation}")
+        
+        y = 690
+        for option in options:
+            p.drawString(100, y, f"Option: {option['option']}, Format: {option['format']}, Quantité: {option['quantity']}, Type de Papier: {option['paper_type']}")
+            y -= 15
+        
+        p.showPage()
+        p.save()
+
+        # Sauvegarder le PDF
+        file_path = os.path.join(settings.MEDIA_ROOT, 'fiche_de_travail.pdf')
+        with open(file_path, 'wb') as f:
+            f.write(response.content)
+        
+        os.startfile(file_path)  # Ouvre automatiquement le PDF sur Windows
+
+        return response
+
     return render(request, 'Application/designation_commande.html', {'commande': commande})
