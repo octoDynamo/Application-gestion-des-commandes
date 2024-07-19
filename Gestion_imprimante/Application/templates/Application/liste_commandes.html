@@ -11,6 +11,7 @@
             <th>Date et Heure</th>
             <th>Company Reference Number</th>
             <th>Order Status</th>
+            <th>Actions</th>
         </tr>
         {% for commande in commandes %}
         <tr>
@@ -18,9 +19,18 @@
             <td>{{ commande.date_time }}</td>
             <td>{{ commande.company_reference_number }}</td>
             <td>{{ commande.order_status }}</td>
+            <td>
+                <a href="{% url 'modifier_commande' commande.pk %}">Modifier</a>
+                <a href="{% url 'supprimer_commande' commande.pk %}">Supprimer</a>
+                {% if user_role == 'directeur' %}
+                <a href="{% url 'generer_devis' commande.pk %}">Générer Devis</a>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </table>
+    {% if user_role == 'assistant' %}
     <a href="{% url 'ajouter_commande' %}">Ajouter une Commande</a>
+    {% endif %}
 </body>
 </html>

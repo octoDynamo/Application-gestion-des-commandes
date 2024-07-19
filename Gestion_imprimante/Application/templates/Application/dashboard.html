@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+    <h2>Dashboard</h2>
+    <p>Bienvenue, {{ user.username }} ({{ user_role }})</p>
+    <a href="{% url 'liste_commandes' %}">Voir les Commandes</a>
+    {% if user_role == 'assistant' %}
+    <a href="{% url 'ajouter_commande' %}">Ajouter une Commande</a>
+    {% endif %}
+    <a href="{% url 'logout' %}">Se Déconnecter</a>
+</body>
+</html>
