@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from django.http import HttpResponse
+import os
 
 def login_view(request):
     if request.method == 'POST':
@@ -81,6 +82,9 @@ def generer_devis(request, pk):
     p.showPage()
     p.save()
 
+    response.flush()
+    os.startfile(response, 'open')  # Ouvre automatiquement le PDF sur Windows
+
     return response
 
 def logout_view(request):
@@ -91,6 +95,8 @@ def logout_view(request):
 def designation_commande(request, pk):
     commande = Commande.objects.get(pk=pk)
     if request.method == 'POST':
+        # Récupérer et traiter les options sélectionnées
+        designation = request.POST.get('designation')
         # Traitement de la désignation de la commande
         return redirect('liste_commandes')
     return render(request, 'Application/designation_commande.html', {'commande': commande})
