@@ -9,35 +9,94 @@
         {% csrf_token %}
         <div class="form-group">
             <label for="designation">Désignation:</label>
-            <input type="text" id="designation" name="designation" class="form-control" required>
+            <select id="designation" name="designation" class="form-control" required>
+                <option value="">Sélectionnez une désignation</option>
+                <option value="IMPRESSION OFFSET">IMPRESSION OFFSET</option>
+                <option value="IMPRESSION GRAND FORMAT">IMPRESSION GRAND FORMAT</option>
+                <option value="IMPRESSION PETIT FORMAT (NUMÉRIQUE)">IMPRESSION PETIT FORMAT (NUMÉRIQUE)</option>
+                <option value="IMPRESSION UV">IMPRESSION UV</option>
+                <option value="DÉCOUPE LASER PETIT ET GRAND FORMAT">DÉCOUPE LASER PETIT ET GRAND FORMAT</option>
+                <option value="DÉCOUPE CNC GRAND FORMAT">DÉCOUPE CNC GRAND FORMAT</option>
+                <option value="DÉCOUPE ADHÉSIF">DÉCOUPE ADHÉSIF</option>
+                <option value="IMPRESSION TOMPOGRAPHIE DEUX COULEURS">IMPRESSION TOMPOGRAPHIE DEUX COULEURS</option>
+            </select>
         </div>
         <!-- Catégories et options -->
-        <div class="form-group">
-            <label for="categories">Catégories:</label>
-            <div class="category">
-                <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#category1">Catégorie 1</button>
-                <div id="category1" class="collapse">
-                    <label><input type="checkbox" name="option1"> Option 1</label>
-                    <div class="details d-none">
-                        <label for="format1">Format:</label>
-                        <input type="text" id="format1" name="format1" class="form-control">
-                        <label><input type="checkbox" name="paper_type1"> Type de Papier 1</label>
-                    </div>
-                    <label><input type="checkbox" name="option2"> Option 2</label>
-                    <div class="details d-none">
-                        <label for="format2">Format:</label>
-                        <input type="text" id="format2" name="format2" class="form-control">
-                        <label><input type="checkbox" name="paper_type2"> Type de Papier 2</label>
-                    </div>
-                </div>
-                <!-- Ajoutez plus de catégories et d'options ici -->
-            </div>
-        </div>
+        <div class="form-group" id="categories-container"></div>
         <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a href="{% url 'liste_commandes' %}" class="btn btn-secondary">Annuler</a>
+        <button type="button" class="btn btn-secondary" onclick="history.back();">Revenir</button>
     </form>
 </div>
 <script>
-document.querySelectorAll('.option input[type="checkbox"]').forEach(function(option) {
+document.getElementById('designation').addEventListener('change', function() {
+    var designation = this.value;
+    var categoriesContainer = document.getElementById('categories-container');
+    categoriesContainer.innerHTML = '';
+    
+    if (designation === 'IMPRESSION OFFSET') {
+        categoriesContainer.innerHTML = generateCategoryHTML('Impression sur Papier', 1) +
+                                        generateCategoryHTML('Impression sur Enveloppe', 2) +
+                                        generateCategoryHTML('Impression sur Calque', 3) +
+                                        generateCategoryHTML('Impression sur Autocollant', 4);
+    } else if (designation === 'IMPRESSION GRAND FORMAT') {
+        categoriesContainer.innerHTML = generateCategoryHTML('Impression sur Bâche', 5) +
+                                        generateCategoryHTML('Impression sur Vinyle', 6) +
+                                        generateCategoryHTML('Impression sur Papier', 7) +
+                                        generateCategoryHTML('Impression sur One Way', 8) +
+                                        generateCategoryHTML('Impression sur Canvas', 9);
+    } else if (designation === 'IMPRESSION PETIT FORMAT (NUMÉRIQUE)') {
+        categoriesContainer.innerHTML = generateCategoryHTML('Impression sur Papier', 10) +
+                                        generateCategoryHTML('Impression sur Enveloppe', 11) +
+                                        generateCategoryHTML('Impression sur Calque', 12) +
+                                        generateCategoryHTML('Impression sur Autocollant', 13);
+    } else if (designation === 'IMPRESSION UV') {
+        categoriesContainer.innerHTML = generateCategoryHTML('Impression sur du Bois', 14) +
+                                        generateCategoryHTML('Impression sur Métal', 15) +
+                                        generateCategoryHTML('Impression sur Plastique', 16) +
+                                        generateCategoryHTML('Impression sur Verre', 17);
+    } else if (designation === 'DÉCOUPE LASER PETIT ET GRAND FORMAT') {
+        categoriesContainer.innerHTML = generateCategoryHTML('Découpe et gravure sur Bois', 18) +
+                                        generateCategoryHTML('Découpe et gravure sur Métal', 19) +
+                                        generateCategoryHTML('Découpe et gravure sur Plastique', 20) +
+                                        generateCategoryHTML('Gravure sur Verre', 21);
+    } else if (designation === 'DÉCOUPE CNC GRAND FORMAT') {
+        categoriesContainer.innerHTML = generateCategoryHTML('Découpe et gravure sur Bois', 22) +
+                                        generateCategoryHTML('Découpe et gravure sur Plastique', 23) +
+                                        generateCategoryHTML('Découpe et gravure sur Alucobond', 24);
+    } else if (designation === 'DÉCOUPE ADHÉSIF') {
+        categoriesContainer.innerHTML = generateCategoryHTML('Découpe sur autocollant Brillant', 25) +
+                                        generateCategoryHTML('Découpe sur autocollant Mat', 26) +
+                                        generateCategoryHTML('Découpe sur Flex', 27) +
+                                        generateCategoryHTML('Découpe sur Adhésif', 28);
+    } else if (designation === 'IMPRESSION TOMPOGRAPHIE DEUX COULEURS') {
+        categoriesContainer.innerHTML = generateCategoryHTML('Impression sur du Bois', 29) +
+                                        generateCategoryHTML('Impression sur Métal', 30) +
+                                        generateCategoryHTML('Impression sur Plastique', 31) +
+                                        generateCategoryHTML('Impression sur Verre', 32);
+    }
+});
+
+function generateCategoryHTML(category, index) {
+    return `<div class="category">
+                <button type="button" class="btn btn-secondary" data-toggle="collapse" data-target="#category${index}">${category}</button>
+                <div id="category${index}" class="collapse">
+                    <div class="option">
+                        <label><input type="checkbox" name="option${index}" class="option-checkbox"> ${category}</label>
+                        <div class="details d-none">
+                            <label for="format${index}">Format:</label>
+                            <input type="text" id="format${index}" name="format${index}" class="form-control">
+                            <label for="quantity${index}">Quantité:</label>
+                            <input type="number" id="quantity${index}" name="quantity${index}" class="form-control">
+                            <label for="paper_type${index}">Type de Papier:</label>
+                            <input type="text" id="paper_type${index}" name="paper_type${index}" class="form-control">
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+}
+
+document.querySelectorAll('.option-checkbox').forEach(function(option) {
     option.addEventListener('change', function() {
         var details = this.closest('.option').querySelector('.details');
         if (this.checked) {
