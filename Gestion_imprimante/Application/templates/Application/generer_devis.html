@@ -1,15 +1,15 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Générer un Devis</title>
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Générer un Devis{% endblock %}
+
+{% block content %}
+<div class="container">
     <h1>Générer un Devis</h1>
     <p>Order ID: {{ commande.order_id }}</p>
     <p>Date et Heure: {{ commande.date_time }}</p>
     <p>Company Reference Number: {{ commande.company_reference_number }}</p>
     <p>Order Status: {{ commande.order_status }}</p>
     <!-- Ajoutez ici la logique pour afficher ou télécharger le devis généré -->
-    <a href="{% url 'dashboard' %}">Retour au Tableau de Bord</a>
-</body>
-</html>
+    <a href="{% url 'liste_commandes' %}" class="btn btn-secondary mt-3">Retour à la liste des commandes</a>
+</div>
+{% endblock %}

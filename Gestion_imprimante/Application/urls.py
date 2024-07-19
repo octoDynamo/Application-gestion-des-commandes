@@ -10,4 +10,5 @@ urlpatterns = [
     path('modifier/<int:pk>/', views.modifier_commande, name='modifier_commande'),
     path('supprimer/<int:pk>/', views.supprimer_commande, name='supprimer_commande'),
     path('generer_devis/<int:pk>/', views.generer_devis, name='generer_devis'),
+    path('designation/<int:pk>/', views.designation_commande, name='designation_commande'),
 ]

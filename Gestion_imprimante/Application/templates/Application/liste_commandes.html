@@ -1,41 +1,49 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Liste des Commandes</title>
-</head>
-<body>
-    <div>
-        <a href="{% url 'logout' %}">Se Déconnecter</a>
+{% extends "base.html" %}
+
+{% block title %}Liste des Commandes{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-end mt-3">
+        <div class="col-md-2">
+            <a href="{% url 'logout' %}" class="btn btn-danger btn-block">Se Déconnecter</a>
+        </div>
     </div>
-    <h1>Liste des Commandes</h1>
-    <table>
-        <tr>
-            <th>Order ID</th>
-            <th>Date et Heure</th>
-            <th>Company Reference Number</th>
-            <th>Order Status</th>
-            <th>Actions</th>
-        </tr>
-        {% for commande in commandes %}
-        <tr>
-            <td>{{ commande.order_id }}</td>
-            <td>{{ commande.date_time }}</td>
-            <td>{{ commande.company_reference_number }}</td>
-            <td>{{ commande.order_status }}</td>
-            <td>
-                <a href="{% url 'modifier_commande' commande.pk %}">Modifier</a>
-                <a href="{% url 'supprimer_commande' commande.pk %}">Supprimer</a>
-                {% if user_role == 'directeur' %}
-                <a href="{% url 'generer_devis' commande.pk %}">Générer Devis</a>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
+    <h1 class="mt-4">Liste des Commandes</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Date et Heure</th>
+                <th>Company Reference Number</th>
+                <th>Order Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for commande in commandes %}
+            <tr>
+                <td>{{ commande.order_id }}</td>
+                <td>{{ commande.date_time }}</td>
+                <td>{{ commande.company_reference_number }}</td>
+                <td>{{ commande.order_status }}</td>
+                <td>
+                    <a href="{% url 'modifier_commande' commande.pk %}" class="btn btn-warning btn-sm">Modifier</a>
+                    <a href="{% url 'supprimer_commande' commande.pk %}" class="btn btn-danger btn-sm">Supprimer</a>
+                    {% if user_role == 'directeur' %}
+                    <a href="{% url 'generer_devis' commande.pk %}" class="btn btn-info btn-sm">Générer Devis</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
-    <div>
+    <div class="row mt-4">
         {% if user_role == 'assistant' %}
-        <a href="{% url 'ajouter_commande' %}">Ajouter une Commande</a>
+        <div class="col-md-12">
+            <a href="{% url 'ajouter_commande' %}" class="btn btn-primary btn-block">Ajouter une Commande</a>
+        </div>
         {% endif %}
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

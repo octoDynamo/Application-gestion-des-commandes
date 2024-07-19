@@ -1,15 +1,33 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Ajouter une Commande</title>
-</head>
-<body>
+{% extends "base.html" %}
+
+{% block title %}Ajouter une Commande{% endblock %}
+
+{% block content %}
+<div class="container">
     <h1>Ajouter une Commande</h1>
-    <form method="post">
+    <form method="post" id="commande-form">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Ajouter</button>
+        <button type="submit" class="btn btn-primary">Suivant</button>
     </form>
-    <a href="{% url 'dashboard' %}">Retour au Tableau de Bord</a>
-</body>
-</html>
+</div>
+<script>
+document.getElementById('commande-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    var form = event.target;
+    var formData = new FormData(form);
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': form.querySelector('input[name="csrfmiddlewaretoken"]').value,
+            'Accept': 'application/json',
+        },
+    }).then(response => response.json()).then(data => {
+        if (data.commande_id) {
+            window.location.href = '/application/designation/' + data.commande_id;
+        }
+    });
+});
+</script>
+{% endblock %}

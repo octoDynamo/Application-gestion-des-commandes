@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Désignation de la Commande{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Désignation de la Commande</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="designation">Désignation:</label>
+            <input type="text" id="designation" name="designation" class="form-control" required>
+        </div>
+        <!-- Ajoutez ici les catégories, options et caractéristiques -->
+        <div class="form-group">
+            <label for="categories">Catégories:</label>
+            <!-- Exemple de catégorie avec des options -->
+            <div class="category">
+                <h5>Catégorie 1</h5>
+                <div class="option">
+                    <label><input type="checkbox" name="option1"> Option 1</label>
+                    <div class="details d-none">
+                        <label for="format1">Format:</label>
+                        <input type="text" id="format1" name="format1" class="form-control">
+                        <label><input type="checkbox" name="paper_type1"> Type de Papier 1</label>
+                        <!-- Ajoutez plus de caractéristiques ici -->
+                    </div>
+                </div>
+                <div class="option">
+                    <label><input type="checkbox" name="option2"> Option 2</label>
+                    <div class="details d-none">
+                        <label for="format2">Format:</label>
+                        <input type="text" id="format2" name="format2" class="form-control">
+                        <label><input type="checkbox" name="paper_type2"> Type de Papier 2</label>
+                        <!-- Ajoutez plus de caractéristiques ici -->
+                    </div>
+                </div>
+                <!-- Ajoutez plus d'options ici -->
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+    </form>
+</div>
+<script>
+document.querySelectorAll('.option input[type="checkbox"]').forEach(function(option) {
+    option.addEventListener('change', function() {
+        var details = this.closest('.option').querySelector('.details');
+        if (this.checked) {
+            details.classList.remove('d-none');
+        } else {
+            details.classList.add('d-none');
+        }
+    });
+});
+</script>
+{% endblock %}
