@@ -4,7 +4,7 @@ from django.core.files.storage import FileSystemStorage
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Commande
@@ -85,13 +85,13 @@ def logout_view(request):
 
 @login_required
 def designation_commande(request, pk):
-    commande = Commande.objects.get(pk=pk)
+    commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
-        # Récupérer et traiter les options sélectionnées
         designation = request.POST.get('designation')
-        # Traitement des options sélectionnées
+        commande.designation = designation
+
         options = []
-        for i in range(1, 5):  # Ajustez la plage selon le nombre d'options
+        for i in range(1, 33):
             if request.POST.get(f'option{i}'):
                 format = request.POST.get(f'format{i}')
                 quantity = request.POST.get(f'quantity{i}')
@@ -103,31 +103,10 @@ def designation_commande(request, pk):
                     'paper_type': paper_type
                 })
 
-        # Générer le PDF
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="fiche_de_travail.pdf"'
-        
-        p = canvas.Canvas(response, pagesize=letter)
-        p.drawString(100, 750, f"Numéro de dossier: {commande.order_id}")
-        p.drawString(100, 735, f"Date: {commande.date_time}")
-        p.drawString(100, 720, f"Nom du client: {commande.company_reference_number}")
-        p.drawString(100, 705, f"Désignation: {designation}")
-        
-        y = 690
-        for option in options:
-            p.drawString(100, y, f"Option: {option['option']}, Format: {option['format']}, Quantité: {option['quantity']}, Type de Papier: {option['paper_type']}")
-            y -= 15
-        
-        p.showPage()
-        p.save()
+        # Assuming you have a JSONField or similar to store the options
+        commande.options = options
+        commande.save()
 
-        # Sauvegarder le PDF
-        file_path = os.path.join(settings.MEDIA_ROOT, 'fiche_de_travail.pdf')
-        with open(file_path, 'wb') as f:
-            f.write(response.content)
-        
-        os.startfile(file_path)  # Ouvre automatiquement le PDF sur Windows
-
-        return response
+        return redirect('liste_commandes')
 
     return render(request, 'Application/designation_commande.html', {'commande': commande})

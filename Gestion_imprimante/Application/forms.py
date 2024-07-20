@@ -4,4 +4,4 @@ from .models import Commande
 class CommandeForm(forms.ModelForm):
     class Meta:
         model = Commande
-        fields = ['order_id', 'company_reference_number', 'order_status']
+        fields = ['order_id', 'company_reference_number', 'order_status']  # Remove 'date_time'

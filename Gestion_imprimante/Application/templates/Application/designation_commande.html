@@ -5,7 +5,7 @@
 {% block content %}
 <div class="container">
     <h1>Désignation de la Commande</h1>
-    <form method="post">
+    <form method="post" id="details-form">
         {% csrf_token %}
         <div class="form-group">
             <label for="designation">Désignation:</label>
@@ -75,6 +75,17 @@ document.getElementById('designation').addEventListener('change', function() {
                                         generateCategoryHTML('Impression sur Plastique', 31) +
                                         generateCategoryHTML('Impression sur Verre', 32);
     }
+
+    document.querySelectorAll('.option-checkbox').forEach(function(option) {
+        option.addEventListener('change', function() {
+            var details = this.closest('.option').querySelector('.details');
+            if (this.checked) {
+                details.classList.remove('d-none');
+            } else {
+                details.classList.add('d-none');
+            }
+        });
+    });
 });
 
 function generateCategoryHTML(category, index) {
@@ -95,16 +106,5 @@ function generateCategoryHTML(category, index) {
                 </div>
             </div>`;
 }
-
-document.querySelectorAll('.option-checkbox').forEach(function(option) {
-    option.addEventListener('change', function() {
-        var details = this.closest('.option').querySelector('.details');
-        if (this.checked) {
-            details.classList.remove('d-none');
-        } else {
-            details.classList.add('d-none');
-        }
-    });
-});
 </script>
 {% endblock %}
