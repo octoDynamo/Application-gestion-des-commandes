@@ -48,10 +48,28 @@
             </tbody>
         </table>
         <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a href="{% url 'liste_commandes' %}" class="btn btn-secondary">Annuler</a>
     </form>
 </div>
 <script>
+document.getElementById('devis-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    var form = event.target;
+    var formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': form.querySelector('input[name="csrfmiddlewaretoken"]').value,
+            'Accept': 'application/json',
+        },
+    }).then(response => response.json()).then(data => {
+        if (data.redirect_url) {
+            window.location.href = data.redirect_url;
+        }
+    });
+});
+
 document.addEventListener('input', function(event) {
     if (event.target.classList.contains('unit-price')) {
         var row = event.target.closest('tr');

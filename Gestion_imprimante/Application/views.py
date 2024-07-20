@@ -1,4 +1,5 @@
 import os
+import io
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from reportlab.lib.pagesizes import letter
@@ -9,6 +10,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Commande
 from .forms import CommandeForm
+from django.urls import reverse
 
 def login_view(request):
     if request.method == 'POST':
@@ -124,7 +126,7 @@ def generer_devis(request, pk):
         # Automatically open the PDF on Windows
         os.startfile(pdf_path)
 
-        return response
+        return JsonResponse({'redirect_url': reverse('liste_commandes')})
 
     return render(request, 'Application/generer_devis.html', {'commande': commande})
 
@@ -183,6 +185,6 @@ def designation_commande(request, pk):
         # Automatically open the PDF on Windows
         os.startfile(pdf_path)
 
-        return response
+        return JsonResponse({'redirect_url': reverse('liste_commandes')})
 
     return render(request, 'Application/designation_commande.html', {'commande': commande})
