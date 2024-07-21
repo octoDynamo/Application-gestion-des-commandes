@@ -3,13 +3,15 @@
 {% block title %}Ajouter une Commande{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>Ajouter une Commande</h1>
-    <form method="post" id="commande-form">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Suivant</button>
-    </form>
+<h1>Ajouter une Commande</h1>
+<div class="card">
+    <div class="card-body">
+        <form method="post" id="commande-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Suivant</button>
+        </form>
+    </div>
 </div>
 <script>
 document.getElementById('commande-form').addEventListener('submit', function(event) {

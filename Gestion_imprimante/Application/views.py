@@ -1,6 +1,7 @@
 import os
 import io
 from django.conf import settings
+from django.core.files.storage import default_storage
 from django.core.files.storage import FileSystemStorage
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -138,7 +139,7 @@ def logout_view(request):
 def designation_commande(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
-        designations = request.POST.getlist('designations')
+        designations = request.POST.getlist('designations[]')
 
         options = []
         for i in range(1, 33):
@@ -153,9 +154,8 @@ def designation_commande(request, pk):
                     'paper_type': paper_type
                 })
 
-        # Assuming you have a JSONField or similar to store the options and designations
+        commande.designation = designations
         commande.options = options
-        commande.designations = designations
         commande.save()
 
         # Generate the PDF
@@ -167,7 +167,7 @@ def designation_commande(request, pk):
         p.drawString(100, 750, f"Numéro de dossier: {commande.order_id}")
         p.drawString(100, 735, f"Date: {commande.date_time}")
         p.drawString(100, 720, f"Nom du client: {commande.company_reference_number}")
-        p.drawString(100, 705, f"Désignations: {', '.join(designations)}")
+        p.drawString(100, 705, f"Désignation: {', '.join(designations)}")
         
         y = 690
         for option in options:
@@ -182,7 +182,7 @@ def designation_commande(request, pk):
         with open(pdf_path, 'wb') as f:
             f.write(response.content)
 
-        # Automatically open the PDF on Windows
+        # Automatically open the PDF on Windows (ensure the path is correct)
         os.startfile(pdf_path)
 
         return JsonResponse({'redirect_url': reverse('liste_commandes')})

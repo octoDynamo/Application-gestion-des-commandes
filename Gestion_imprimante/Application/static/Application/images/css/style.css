@@ -1,0 +1,47 @@
+body {
+    background-color: #f8f9fa;
+    font-family: 'Arial', sans-serif;
+}
+
+.navbar {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.nav-link {
+    font-size: 1.1em;
+}
+
+.container {
+    margin-top: 20px;
+}
+
+h1 {
+    color: #006064;
+    margin-bottom: 20px;
+}
+
+.btn-primary {
+    background-color: #006064;
+    border-color: #006064;
+}
+
+.btn-primary:hover {
+    background-color: #004d40;
+    border-color: #004d40;
+}
+
+.table th, .table td {
+    vertical-align: middle;
+}
+
+.category {
+    margin-bottom: 20px;
+}
+
+.details {
+    margin-top: 10px;
+}
+
+.details label {
+    font-weight: bold;
+}

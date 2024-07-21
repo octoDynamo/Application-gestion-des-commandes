@@ -3,32 +3,34 @@
 {% block title %}Désignation de la Commande{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>Désignation de la Commande</h1>
-    <form method="post" id="details-form">
-        {% csrf_token %}
-        <div class="form-group">
-            <label for="designations">Désignations:</label>
-            <div id="designations-container">
-                <div class="designation-entry mb-3">
-                    <select class="form-control designation-select" name="designations[]" required>
-                        <option value="">Sélectionnez une désignation</option>
-                        <option value="IMPRESSION OFFSET">IMPRESSION OFFSET</option>
-                        <option value="IMPRESSION GRAND FORMAT">IMPRESSION GRAND FORMAT</option>
-                        <option value="IMPRESSION PETIT FORMAT (NUMÉRIQUE)">IMPRESSION PETIT FORMAT (NUMÉRIQUE)</option>
-                        <option value="IMPRESSION UV">IMPRESSION UV</option>
-                        <option value="DÉCOUPE LASER PETIT ET GRAND FORMAT">DÉCOUPE LASER PETIT ET GRAND FORMAT</option>
-                        <option value="DÉCOUPE CNC GRAND FORMAT">DÉCOUPE CNC GRAND FORMAT</option>
-                        <option value="DÉCOUPE ADHÉSIF">DÉCOUPE ADHÉSIF</option>
-                        <option value="IMPRESSION TOMPOGRAPHIE DEUX COULEURS">IMPRESSION TOMPOGRAPHIE DEUX COULEURS</option>
-                    </select>
-                    <div class="categories-container mt-2"></div>
+<h1>Désignation de la Commande</h1>
+<div class="card">
+    <div class="card-body">
+        <form method="post" id="details-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="designations">Désignations:</label>
+                <div id="designations-container">
+                    <div class="designation-entry mb-3">
+                        <select class="form-control designation-select" name="designations[]" required>
+                            <option value="">Sélectionnez une désignation</option>
+                            <option value="IMPRESSION OFFSET">IMPRESSION OFFSET</option>
+                            <option value="IMPRESSION GRAND FORMAT">IMPRESSION GRAND FORMAT</option>
+                            <option value="IMPRESSION PETIT FORMAT (NUMÉRIQUE)">IMPRESSION PETIT FORMAT (NUMÉRIQUE)</option>
+                            <option value="IMPRESSION UV">IMPRESSION UV</option>
+                            <option value="DÉCOUPE LASER PETIT ET GRAND FORMAT">DÉCOUPE LASER PETIT ET GRAND FORMAT</option>
+                            <option value="DÉCOUPE CNC GRAND FORMAT">DÉCOUPE CNC GRAND FORMAT</option>
+                            <option value="DÉCOUPE ADHÉSIF">DÉCOUPE ADHÉSIF</option>
+                            <option value="IMPRESSION TOMPOGRAPHIE DEUX COULEURS">IMPRESSION TOMPOGRAPHIE DEUX COULEURS</option>
+                        </select>
+                        <div class="categories-container mt-2"></div>
+                    </div>
                 </div>
+                <button type="button" id="add-designation" class="btn btn-secondary">Ajouter une désignation</button>
             </div>
-            <button type="button" id="add-designation" class="btn btn-secondary">Ajouter une désignation</button>
-        </div>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-    </form>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </form>
+    </div>
 </div>
 <script>
 document.getElementById('add-designation').addEventListener('click', function() {
@@ -116,6 +118,25 @@ document.addEventListener('change', function(event) {
             details.classList.add('d-none');
         }
     }
+});
+
+document.getElementById('details-form').addEventListener('submit', function(event) {
+    event.preventDefault();
+    var form = event.target;
+    var formData = new FormData(form);
+
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': form.querySelector('input[name="csrfmiddlewaretoken"]').value,
+            'Accept': 'application/json',
+        },
+    }).then(response => response.json()).then(data => {
+        if (data.redirect_url) {
+            window.location.href = data.redirect_url;
+        }
+    });
 });
 </script>
 {% endblock %}
