@@ -138,8 +138,7 @@ def logout_view(request):
 def designation_commande(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
-        designation = request.POST.get('designation')
-        commande.designation = designation
+        designations = request.POST.getlist('designations')
 
         options = []
         for i in range(1, 33):
@@ -154,8 +153,9 @@ def designation_commande(request, pk):
                     'paper_type': paper_type
                 })
 
-        # Assuming you have a JSONField or similar to store the options
+        # Assuming you have a JSONField or similar to store the options and designations
         commande.options = options
+        commande.designations = designations
         commande.save()
 
         # Generate the PDF
@@ -167,7 +167,7 @@ def designation_commande(request, pk):
         p.drawString(100, 750, f"Numéro de dossier: {commande.order_id}")
         p.drawString(100, 735, f"Date: {commande.date_time}")
         p.drawString(100, 720, f"Nom du client: {commande.company_reference_number}")
-        p.drawString(100, 705, f"Désignation: {designation}")
+        p.drawString(100, 705, f"Désignations: {', '.join(designations)}")
         
         y = 690
         for option in options:

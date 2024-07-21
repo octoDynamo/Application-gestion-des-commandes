@@ -6,8 +6,8 @@ class Commande(models.Model):
     date_time = models.DateTimeField(auto_now_add=True)
     company_reference_number = models.CharField(max_length=100)
     order_status = models.CharField(max_length=50)
-    designation = models.CharField(max_length=100, blank=True, null=True)
-    options = models.JSONField(default=dict)  # Provide a default empty dict
+    designations = models.JSONField(default=list)  # Store multiple designations
+    options = models.JSONField(default=dict)  # Store options per designation
 
     def __str__(self):
         return self.order_id
