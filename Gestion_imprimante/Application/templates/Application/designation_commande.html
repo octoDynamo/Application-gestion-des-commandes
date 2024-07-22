@@ -11,25 +11,7 @@
             <div class="form-group">
                 <label for="designations">Désignations:</label>
                 <div id="designations-container">
-                    <div class="designation-entry mb-3">
-                        <div class="input-group">
-                            <select class="form-control designation-select" name="designations[]" required>
-                                <option value="">Sélectionnez une désignation</option>
-                                <option value="IMPRESSION OFFSET">IMPRESSION OFFSET</option>
-                                <option value="IMPRESSION GRAND FORMAT">IMPRESSION GRAND FORMAT</option>
-                                <option value="IMPRESSION PETIT FORMAT (NUMÉRIQUE)">IMPRESSION PETIT FORMAT (NUMÉRIQUE)</option>
-                                <option value="IMPRESSION UV">IMPRESSION UV</option>
-                                <option value="DÉCOUPE LASER PETIT ET GRAND FORMAT">DÉCOUPE LASER PETIT ET GRAND FORMAT</option>
-                                <option value="DÉCOUPE CNC GRAND FORMAT">DÉCOUPE CNC GRAND FORMAT</option>
-                                <option value="DÉCOUPE ADHÉSIF">DÉCOUPE ADHÉSIF</option>
-                                <option value="IMPRESSION TOMPOGRAPHIE DEUX COULEURS">IMPRESSION TOMPOGRAPHIE DEUX COULEURS</option>
-                            </select>
-                            <div class="input-group-append">
-                                <button class="btn btn-danger remove-designation" type="button">Supprimer</button>
-                            </div>
-                        </div>
-                        <div class="categories-container mt-2"></div>
-                    </div>
+                    <!-- Designation entries will be dynamically added here -->
                 </div>
                 <button type="button" id="add-designation" class="btn btn-secondary mt-3">Ajouter une désignation</button>
             </div>
@@ -42,11 +24,32 @@
 </div>
 
 <script>
+let designationCounter = 0;
+
 document.getElementById('add-designation').addEventListener('click', function() {
-    var newEntry = document.querySelector('.designation-entry').cloneNode(true);
-    newEntry.querySelector('.designation-select').value = '';
-    newEntry.querySelector('.categories-container').innerHTML = '';
-    document.getElementById('designations-container').appendChild(newEntry);
+    var designationEntry = document.createElement('div');
+    designationEntry.className = 'designation-entry mb-3';
+    designationEntry.innerHTML = `
+        <div class="input-group">
+            <select class="form-control designation-select" name="designations[]" data-designation-id="${designationCounter}" required>
+                <option value="">Sélectionnez une désignation</option>
+                <option value="IMPRESSION OFFSET">IMPRESSION OFFSET</option>
+                <option value="IMPRESSION GRAND FORMAT">IMPRESSION GRAND FORMAT</option>
+                <option value="IMPRESSION PETIT FORMAT (NUMÉRIQUE)">IMPRESSION PETIT FORMAT (NUMÉRIQUE)</option>
+                <option value="IMPRESSION UV">IMPRESSION UV</option>
+                <option value="DÉCOUPE LASER PETIT ET GRAND FORMAT">DÉCOUPE LASER PETIT ET GRAND FORMAT</option>
+                <option value="DÉCOUPE CNC GRAND FORMAT">DÉCOUPE CNC GRAND FORMAT</option>
+                <option value="DÉCOUPE ADHÉSIF">DÉCOUPE ADHÉSIF</option>
+                <option value="IMPRESSION TOMPOGRAPHIE DEUX COULEURS">IMPRESSION TOMPOGRAPHIE DEUX COULEURS</option>
+            </select>
+            <div class="input-group-append">
+                <button class="btn btn-danger remove-designation" type="button">Supprimer</button>
+            </div>
+        </div>
+        <div class="categories-container mt-2"></div>
+    `;
+    document.getElementById('designations-container').appendChild(designationEntry);
+    designationCounter++;
 });
 
 document.addEventListener('click', function(event) {
@@ -57,17 +60,18 @@ document.addEventListener('click', function(event) {
 
 document.addEventListener('change', function(event) {
     if (event.target.classList.contains('designation-select')) {
+        var designationId = event.target.getAttribute('data-designation-id');
         var designation = event.target.value;
         var categoriesContainer = event.target.closest('.designation-entry').querySelector('.categories-container');
         categoriesContainer.innerHTML = '';
 
         if (designation) {
-            categoriesContainer.innerHTML = generateCategoriesHTML(designation);
+            categoriesContainer.innerHTML = generateCategoriesHTML(designation, designationId);
         }
     }
 });
 
-function generateCategoriesHTML(designation) {
+function generateCategoriesHTML(designation, designationId) {
     let categories = [];
     if (designation === 'IMPRESSION OFFSET') {
         categories = ['Impression sur Papier', 'Impression sur Enveloppe', 'Impression sur Calque', 'Impression sur Autocollant'];
@@ -87,29 +91,29 @@ function generateCategoriesHTML(designation) {
         categories = ['Impression sur du Bois', 'Impression sur Métal', 'Impression sur Plastique', 'Impression sur Verre'];
     }
 
-    return categories.map((category, index) => generateCategoryHTML(category, index)).join('');
+    return categories.map((category, index) => generateCategoryHTML(category, index, designationId)).join('');
 }
 
-function generateCategoryHTML(category, index) {
+function generateCategoryHTML(category, index, designationId) {
     return `<div class="card mb-3">
                 <div class="card-header">
                     <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input option-checkbox" id="option${index}" name="option${index}">
-                        <label class="custom-control-label" for="option${index}">${category}</label>
+                        <input type="checkbox" class="custom-control-input option-checkbox" id="option${designationId}_${index}" name="option${designationId}_${index}">
+                        <label class="custom-control-label" for="option${designationId}_${index}">${category}</label>
                     </div>
                 </div>
                 <div class="card-body details d-none">
                     <div class="form-group">
-                        <label for="format${index}">Format:</label>
-                        <input type="text" id="format${index}" name="format${index}" class="form-control">
+                        <label for="format${designationId}_${index}">Format:</label>
+                        <input type="text" id="format${designationId}_${index}" name="format${designationId}_${index}" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label for="quantity${index}">Quantité:</label>
-                        <input type="number" id="quantity${index}" name="quantity${index}" class="form-control">
+                        <label for="quantity${designationId}_${index}">Quantité:</label>
+                        <input type="number" id="quantity${designationId}_${index}" name="quantity${designationId}_${index}" class="form-control">
                     </div>
                     <div class="form-group">
-                        <label for="paper_type${index}">Type de Papier:</label>
-                        <input type="text" id="paper_type${index}" name="paper_type${index}" class="form-control">
+                        <label for="paper_type${designationId}_${index}">Type de Papier:</label>
+                        <input type="text" id="paper_type${designationId}_${index}" name="paper_type${designationId}_${index}" class="form-control">
                     </div>
                 </div>
             </div>`;

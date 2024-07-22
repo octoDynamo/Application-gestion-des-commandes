@@ -12,6 +12,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Commande
 from .forms import CommandeForm
 from django.urls import reverse
+from django.db.models import Q
 
 def login_view(request):
     if request.method == 'POST':
@@ -32,8 +33,16 @@ def dashboard(request):
 
 @login_required
 def liste_commandes(request):
+    query = request.GET.get('q')
+    if query:
+        commandes = Commande.objects.filter(
+            Q(order_id__icontains=query) |
+            Q(company_reference_number__icontains=query) |
+            Q(order_status__icontains=query)
+        )
+    else:
+        commandes = Commande.objects.all()
     user_role = 'directeur' if request.user.groups.filter(name='Directeurs').exists() else 'assistant'
-    commandes = Commande.objects.all()
     return render(request, 'Application/liste_commandes.html', {'commandes': commandes, 'user_role': user_role})
 
 @login_required
