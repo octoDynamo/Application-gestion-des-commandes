@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Log des Commandes{% endblock %}
+
+{% block content %}
+<h1 class="text-center my-4">Log des Commandes</h1>
+<div class="container">
+    <div class="text-right mb-3">
+        <form method="post" action="{% url 'clear_log' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">Clear Log</button>
+        </form>
+    </div>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Utilisateur</th>
+                <th>Action</th>
+                <th>Commande</th>
+                <th>Date et Heure</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.user.username }}</td>
+                <td>{{ log.get_action_display }}</td>
+                <td>{% if log.commande %}{{ log.commande.order_id }}{% else %}Deleted{% endif %}</td>
+                <td>{{ log.timestamp }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

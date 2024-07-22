@@ -11,4 +11,6 @@ urlpatterns = [
     path('supprimer/<int:pk>/', views.supprimer_commande, name='supprimer_commande'),
     path('generer_devis/<int:pk>/', views.generer_devis, name='generer_devis'),
     path('designation/<int:pk>/', views.designation_commande, name='designation_commande'),
+    path('log/', views.log_view, name='log_view'),
+    path('clear_log/', views.clear_log, name='clear_log'),
 ]

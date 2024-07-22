@@ -9,7 +9,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Commande
+from .models import Commande, CommandeLog
 from .forms import CommandeForm
 from django.urls import reverse
 from django.db.models import Q
@@ -30,6 +30,9 @@ def login_view(request):
 @login_required
 def dashboard(request):
     return redirect('liste_commandes')
+
+def log_action(user, action, commande):
+    CommandeLog.objects.create(user=user, action=action, commande=commande)
 
 @login_required
 def liste_commandes(request):
@@ -52,6 +55,7 @@ def ajouter_commande(request):
         form = CommandeForm(request.POST)
         if form.is_valid():
             commande = form.save()
+            log_action(request.user, 'add', commande)
             return JsonResponse({'commande_id': commande.id})
     else:
         form = CommandeForm()
@@ -59,16 +63,17 @@ def ajouter_commande(request):
 
 @login_required
 def supprimer_commande(request, pk):
-    if not (request.user.groups.filter(name='Directeurs').exists() or request.user.groups.filter(name='Assistants').exists()):
+    if not request.user.groups.filter(name='Directeurs').exists() and not request.user.groups.filter(name='Assistants').exists():
         return redirect('liste_commandes')
     commande = get_object_or_404(Commande, pk=pk)
+    log_action(request.user, 'delete', commande)
     commande.delete()
     return redirect('liste_commandes')
-
 
 @login_required
 def modifier_commande(request, pk):
     commande = Commande.objects.get(pk=pk)
+    log_action(request.user, 'modify', commande)
     return redirect('designation_commande', pk=commande.pk)
 
 @login_required
@@ -197,3 +202,12 @@ def designation_commande(request, pk):
         return JsonResponse({'redirect_url': reverse('liste_commandes')})
 
     return render(request, 'Application/designation_commande.html', {'commande': commande})
+
+def log_view(request):
+    logs = CommandeLog.objects.all().order_by('-timestamp')
+    return render(request, 'Application/log_view.html', {'logs': logs})
+
+def clear_log(request):
+    if request.method == 'POST':
+        CommandeLog.objects.all().delete()
+    return redirect('log_view')
