@@ -1,18 +1,32 @@
 from django.db import models
 from django.contrib.auth.models import User
-import json
 
 class Commande(models.Model):
     order_id = models.CharField(max_length=100, unique=True)
     date_time = models.DateTimeField(auto_now_add=True)
     company_reference_number = models.CharField(max_length=100)
     order_status = models.CharField(max_length=50)
-    designations = models.JSONField(default=list)  # Store multiple designations
-    options = models.JSONField(default=dict)  # Store options per designation
 
     def __str__(self):
         return self.order_id
     
+class Designation(models.Model):
+    name = models.CharField(max_length=100)
+    commande = models.ForeignKey(Commande, related_name='designations', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+class Option(models.Model):
+    designation = models.ForeignKey(Designation, related_name='options', on_delete=models.CASCADE)
+    option_name = models.CharField(max_length=100)
+    format = models.CharField(max_length=100)
+    quantity = models.PositiveIntegerField()
+    paper_type = models.CharField(max_length=100)
+
+    def __str__(self):
+        return f"{self.option_name} ({self.designation})"
+
 class CommandeLog(models.Model):
     ACTION_CHOICES = (
         ('add', 'Add'),

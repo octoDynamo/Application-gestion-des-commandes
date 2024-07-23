@@ -1,17 +1,13 @@
 import os
-import io
 from django.conf import settings
-from django.core.files.storage import default_storage
-from django.core.files.storage import FileSystemStorage
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import Commande, CommandeLog
+from .models import Commande, CommandeLog, Designation, Option
 from .forms import CommandeForm
-from django.urls import reverse
 from django.db.models import Q
 
 def login_view(request):
@@ -27,12 +23,12 @@ def login_view(request):
             return render(request, 'Application/login.html', {'error_message': error_message})
     return render(request, 'Application/login.html')
 
+def log_action(user, action, commande):
+    CommandeLog.objects.create(user=user, action=action, commande=commande)
+
 @login_required
 def dashboard(request):
     return redirect('liste_commandes')
-
-def log_action(user, action, commande):
-    CommandeLog.objects.create(user=user, action=action, commande=commande)
 
 @login_required
 def liste_commandes(request):
@@ -56,7 +52,7 @@ def ajouter_commande(request):
         if form.is_valid():
             commande = form.save()
             log_action(request.user, 'add', commande)
-            return JsonResponse({'commande_id': commande.id})
+            return redirect('designation_commande', pk=commande.id)
     else:
         form = CommandeForm()
     return render(request, 'Application/ajouter_commande.html', {'form': form})
@@ -72,7 +68,7 @@ def supprimer_commande(request, pk):
 
 @login_required
 def modifier_commande(request, pk):
-    commande = Commande.objects.get(pk=pk)
+    commande = get_object_or_404(Commande, pk=pk)
     log_action(request.user, 'modify', commande)
     return redirect('designation_commande', pk=commande.pk)
 
@@ -82,22 +78,13 @@ def generer_devis(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
 
     if request.method == 'POST':
-        quantities = []
-        designations = []
-        options = []
-        formats = []
-        paper_types = []
-        unit_prices = []
-        total_prices = []
-
-        for i in range(1, len(commande.options) + 1):
-            quantities.append(request.POST.get(f'quantity{i}'))
-            designations.append(request.POST.get(f'designation{i}'))
-            options.append(request.POST.get(f'option{i}'))
-            formats.append(request.POST.get(f'format{i}'))
-            paper_types.append(request.POST.get(f'paper_type{i}'))
-            unit_prices.append(request.POST.get(f'unit_price{i}'))
-            total_prices.append(request.POST.get(f'total_price{i}'))
+        quantities = request.POST.getlist('quantity[]')
+        designations = request.POST.getlist('designation[]')
+        options = request.POST.getlist('option[]')
+        formats = request.POST.getlist('format[]')
+        paper_types = request.POST.getlist('paper_type[]')
+        unit_prices = request.POST.getlist('unit_price[]')
+        total_prices = request.POST.getlist('total_price[]')
 
         # Generate the PDF
         response = HttpResponse(content_type='application/pdf')
@@ -141,7 +128,7 @@ def generer_devis(request, pk):
         # Automatically open the PDF on Windows
         os.startfile(pdf_path)
 
-        return JsonResponse({'redirect_url': reverse('liste_commandes')})
+        return redirect('liste_commandes')
 
     return render(request, 'Application/generer_devis.html', {'commande': commande})
 
@@ -155,22 +142,19 @@ def designation_commande(request, pk):
     if request.method == 'POST':
         designations = request.POST.getlist('designations[]')
 
-        options = []
-        for i in range(1, 33):
-            if request.POST.get(f'option{i}'):
-                format = request.POST.get(f'format{i}')
-                quantity = request.POST.get(f'quantity{i}')
-                paper_type = request.POST.get(f'paper_type{i}')
-                options.append({
-                    'option': f'Option {i}',
-                    'format': format,
-                    'quantity': quantity,
-                    'paper_type': paper_type
-                })
+        commande.designations.all().delete()
 
-        commande.designation = designations
-        commande.options = options
-        commande.save()
+        for designation_name in designations:
+            designation = Designation.objects.create(name=designation_name, commande=commande)
+            for i in range(1, 33):
+                if request.POST.get(f'option{i}'):
+                    Option.objects.create(
+                        designation=designation,
+                        option_name=request.POST.get(f'option{i}'),
+                        format=request.POST.get(f'format{i}'),
+                        quantity=request.POST.get(f'quantity{i}'),
+                        paper_type=request.POST.get(f'paper_type{i}')
+                    )
 
         # Generate the PDF
         response = HttpResponse(content_type='application/pdf')
@@ -184,9 +168,10 @@ def designation_commande(request, pk):
         p.drawString(100, 705, f"Désignation: {', '.join(designations)}")
         
         y = 690
-        for option in options:
-            p.drawString(100, y, f"Option: {option['option']}, Format: {option['format']}, Quantité: {option['quantity']}, Type de Papier: {option['paper_type']}")
-            y -= 15
+        for designation in commande.designations.all():
+            for option in designation.options.all():
+                p.drawString(100, y, f"Option: {option.option_name}, Format: {option.format}, Quantité: {option.quantity}, Type de Papier: {option.paper_type}")
+                y -= 15
         
         p.showPage()
         p.save()
@@ -199,14 +184,18 @@ def designation_commande(request, pk):
         # Automatically open the PDF on Windows (ensure the path is correct)
         os.startfile(pdf_path)
 
-        return JsonResponse({'redirect_url': reverse('liste_commandes')})
+        return redirect('liste_commandes')
 
     return render(request, 'Application/designation_commande.html', {'commande': commande})
 
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def log_view(request):
     logs = CommandeLog.objects.all().order_by('-timestamp')
     return render(request, 'Application/log_view.html', {'logs': logs})
 
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def clear_log(request):
     if request.method == 'POST':
         CommandeLog.objects.all().delete()

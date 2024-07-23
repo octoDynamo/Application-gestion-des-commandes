@@ -13,23 +13,4 @@
         </form>
     </div>
 </div>
-<script>
-document.getElementById('commande-form').addEventListener('submit', function(event) {
-    event.preventDefault();
-    var form = event.target;
-    var formData = new FormData(form);
-    fetch(form.action, {
-        method: 'POST',
-        body: formData,
-        headers: {
-            'X-CSRFToken': form.querySelector('input[name="csrfmiddlewaretoken"]').value,
-            'Accept': 'application/json',
-        },
-    }).then(response => response.json()).then(data => {
-        if (data.commande_id) {
-            window.location.href = '/application/designation/' + data.commande_id;
-        }
-    });
-});
-</script>
 {% endblock %}
