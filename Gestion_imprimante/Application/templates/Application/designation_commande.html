@@ -11,7 +11,7 @@
             <div class="form-group">
                 <label for="designations">Désignations:</label>
                 <div id="designations-container">
-                    <!-- Designation entries will be dynamically added here -->
+                    <!-- Les entrées de désignation seront ajoutées dynamiquement ici -->
                 </div>
                 <button type="button" id="add-designation" class="btn btn-secondary mt-3">Ajouter une désignation</button>
             </div>
@@ -98,25 +98,32 @@ function generateCategoryHTML(category, index, designationId) {
     return `<div class="card mb-3">
                 <div class="card-header">
                     <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input option-checkbox" id="option${designationId}_${index}" name="option${designationId}_${index}">
+                        <input type="checkbox" class="custom-control-input option-checkbox" id="option${designationId}_${index}" name="options[${designationId}][]" value="${category}">
                         <label class="custom-control-label" for="option${designationId}_${index}">${category}</label>
                     </div>
                 </div>
                 <div class="card-body details d-none">
                     <div class="form-group">
                         <label for="format${designationId}_${index}">Format:</label>
-                        <input type="text" id="format${designationId}_${index}" name="format${designationId}_${index}" class="form-control">
+                        <input type="text" id="format${designationId}_${index}" name="formats[${designationId}][]" class="form-control">
                     </div>
                     <div class="form-group">
                         <label for="quantity${designationId}_${index}">Quantité:</label>
-                        <input type="number" id="quantity${designationId}_${index}" name="quantity${designationId}_${index}" class="form-control">
+                        <input type="number" id="quantity${designationId}_${index}" name="quantities[${designationId}][]" class="form-control">
                     </div>
                     <div class="form-group">
                         <label for="paper_type${designationId}_${index}">Type de Papier:</label>
-                        <input type="text" id="paper_type${designationId}_${index}" name="paper_type${designationId}_${index}" class="form-control">
+                        <input type="text" id="paper_type${designationId}_${index}" name="paper_types[${designationId}][]" class="form-control">
                     </div>
                 </div>
             </div>`;
 }
+
+document.addEventListener('change', function(event) {
+    if (event.target.classList.contains('option-checkbox')) {
+        var details = event.target.closest('.card').querySelector('.details');
+        details.classList.toggle('d-none', !event.target.checked);
+    }
+});
 </script>
 {% endblock %}

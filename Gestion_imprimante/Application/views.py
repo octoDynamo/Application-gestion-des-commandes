@@ -140,23 +140,26 @@ def logout_view(request):
 def designation_commande(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
-        designations = request.POST.getlist('designations[]')
-
+        # Supprimer les désignations existantes
         commande.designations.all().delete()
+
+        # Ajouter les nouvelles désignations et options
+        designations = request.POST.getlist('designations[]')
 
         for designation_name in designations:
             designation = Designation.objects.create(name=designation_name, commande=commande)
             for i in range(1, 33):
-                if request.POST.get(f'option{i}'):
+                option_name = request.POST.get(f'option{i}')
+                if option_name:
                     Option.objects.create(
                         designation=designation,
-                        option_name=request.POST.get(f'option{i}'),
+                        option_name=option_name,
                         format=request.POST.get(f'format{i}'),
                         quantity=request.POST.get(f'quantity{i}'),
                         paper_type=request.POST.get(f'paper_type{i}')
                     )
 
-        # Generate the PDF
+        # Générer le PDF
         response = HttpResponse(content_type='application/pdf')
         filename = f"fiche_travail_{commande.order_id}.pdf"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -165,7 +168,7 @@ def designation_commande(request, pk):
         p.drawString(100, 750, f"Numéro de dossier: {commande.order_id}")
         p.drawString(100, 735, f"Date: {commande.date_time}")
         p.drawString(100, 720, f"Nom du client: {commande.company_reference_number}")
-        p.drawString(100, 705, f"Désignation: {', '.join(designations)}")
+        p.drawString(100, 705, f"Désignation: {', '.join(designation.name for designation in commande.designations.all())}")
         
         y = 690
         for designation in commande.designations.all():
@@ -176,12 +179,12 @@ def designation_commande(request, pk):
         p.showPage()
         p.save()
 
-        # Save the PDF to a file and serve it
+        # Sauvegarder le PDF dans un fichier et le servir
         pdf_path = os.path.join(settings.MEDIA_ROOT, filename)
         with open(pdf_path, 'wb') as f:
             f.write(response.content)
 
-        # Automatically open the PDF on Windows (ensure the path is correct)
+        # Ouvrir automatiquement le PDF sur Windows
         os.startfile(pdf_path)
 
         return redirect('liste_commandes')
