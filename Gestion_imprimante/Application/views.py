@@ -50,7 +50,10 @@ def ajouter_commande(request):
     if request.method == 'POST':
         form = CommandeForm(request.POST)
         if form.is_valid():
-            commande = form.save()
+            # Save the commande as a draft
+            commande = form.save(commit=False)
+            commande.order_status = 'draft'  # or another status indicating it's incomplete
+            commande.save()
             log_action(request.user, 'add', commande)
             return redirect('designation_commande', pk=commande.id)
     else:
@@ -149,15 +152,18 @@ def designation_commande(request, pk):
         for designation_name in designations:
             designation = Designation.objects.create(name=designation_name, commande=commande)
             for i in range(1, 33):
-                option_name = request.POST.get(f'option{i}')
-                if option_name:
+                if request.POST.get(f'option{i}'):
                     Option.objects.create(
                         designation=designation,
-                        option_name=option_name,
+                        option_name=request.POST.get(f'option{i}'),
                         format=request.POST.get(f'format{i}'),
                         quantity=request.POST.get(f'quantity{i}'),
                         paper_type=request.POST.get(f'paper_type{i}')
                     )
+
+        # Update the commande status to complete or another appropriate status
+        commande.order_status = 'complete'  # or another status indicating it's complete
+        commande.save()
 
         # Générer le PDF
         response = HttpResponse(content_type='application/pdf')
