@@ -22,13 +22,13 @@
             {% for designation in commande.designations.all %}
                 {% for option in designation.options.all %}
                 <tr>
-                    <td><input type="number" name="quantity{{ forloop.counter }}" class="form-control" value="{{ option.quantity }}" required></td>
-                    <td><input type="text" name="designation{{ forloop.counter }}" class="form-control" value="{{ designation.name }}" required></td>
-                    <td><input type="text" name="option{{ forloop.counter }}" class="form-control" value="{{ option.option_name }}" required></td>
-                    <td><input type="text" name="format{{ forloop.counter }}" class="form-control" value="{{ option.format }}" required></td>
-                    <td><input type="text" name="paper_type{{ forloop.counter }}" class="form-control" value="{{ option.paper_type }}" required></td>
-                    <td><input type="number" step="0.01" name="unit_price{{ forloop.counter }}" class="form-control" required></td>
-                    <td><input type="number" step="0.01" name="total_price{{ forloop.counter }}" class="form-control" required></td>
+                    <td><input type="number" name="quantity[]" class="form-control" value="{{ option.quantity }}" required></td>
+                    <td><input type="text" name="designation[]" class="form-control" value="{{ designation.name }}" readonly></td>
+                    <td><input type="text" name="option[]" class="form-control" value="{{ option.option_name }}" readonly></td>
+                    <td><input type="text" name="format[]" class="form-control" value="{{ option.format }}" readonly></td>
+                    <td><input type="text" name="paper_type[]" class="form-control" value="{{ option.paper_type }}" readonly></td>
+                    <td><input type="number" step="0.01" name="unit_price[]" class="form-control unit-price" required></td>
+                    <td><input type="number" step="0.01" name="total_price[]" class="form-control total-price" readonly></td>
                 </tr>
                 {% endfor %}
             {% endfor %}
@@ -39,4 +39,21 @@
         <a href="{% url 'liste_commandes' %}" class="btn btn-secondary">Annuler</a>
     </div>
 </form>
+
+<script>
+document.addEventListener('input', function(event) {
+    if (event.target.classList.contains('unit-price')) {
+        const row = event.target.closest('tr');
+        const quantity = parseFloat(row.querySelector('input[name="quantity[]"]').value);
+        const unitPrice = parseFloat(event.target.value);
+        const totalPriceInput = row.querySelector('input[name="total_price[]"]');
+        
+        if (!isNaN(quantity) && !isNaN(unitPrice)) {
+            totalPriceInput.value = (quantity * unitPrice).toFixed(2);
+        } else {
+            totalPriceInput.value = '';
+        }
+    }
+});
+</script>
 {% endblock %}

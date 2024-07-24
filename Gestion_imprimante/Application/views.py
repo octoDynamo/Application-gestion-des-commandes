@@ -87,7 +87,16 @@ def generer_devis(request, pk):
         formats = request.POST.getlist('format[]')
         paper_types = request.POST.getlist('paper_type[]')
         unit_prices = request.POST.getlist('unit_price[]')
-        total_prices = request.POST.getlist('total_price[]')
+        total_prices = []
+
+        # Calculate total prices
+        for unit_price, quantity in zip(unit_prices, quantities):
+            try:
+                unit_price = float(unit_price)
+                quantity = int(quantity)
+                total_prices.append(unit_price * quantity)
+            except ValueError:
+                total_prices.append(0)  # Default to 0 if parsing fails
 
         # Generate the PDF
         response = HttpResponse(content_type='application/pdf')
@@ -148,21 +157,23 @@ def designation_commande(request, pk):
 
         # Ajouter les nouvelles désignations et options
         designations = request.POST.getlist('designations[]')
+        options = request.POST.getlist('options')
+        formats = request.POST.getlist('formats')
+        quantities = request.POST.getlist('quantities')
+        paper_types = request.POST.getlist('paper_types')
 
-        for designation_name in designations:
+        for i, designation_name in enumerate(designations):
             designation = Designation.objects.create(name=designation_name, commande=commande)
-            for i in range(1, 33):
-                if request.POST.get(f'option{i}'):
-                    Option.objects.create(
-                        designation=designation,
-                        option_name=request.POST.get(f'option{i}'),
-                        format=request.POST.get(f'format{i}'),
-                        quantity=request.POST.get(f'quantity{i}'),
-                        paper_type=request.POST.get(f'paper_type{i}')
-                    )
+            for j in range(len(options[i])):
+                Option.objects.create(
+                    designation=designation,
+                    option_name=options[i][j],
+                    format=formats[i][j],
+                    quantity=quantities[i][j],
+                    paper_type=paper_types[i][j]
+                )
 
-        # Update the commande status to complete or another appropriate status
-        commande.order_status = 'complete'  # or another status indicating it's complete
+        commande.order_status = 'completed'
         commande.save()
 
         # Générer le PDF
@@ -174,14 +185,14 @@ def designation_commande(request, pk):
         p.drawString(100, 750, f"Numéro de dossier: {commande.order_id}")
         p.drawString(100, 735, f"Date: {commande.date_time}")
         p.drawString(100, 720, f"Nom du client: {commande.company_reference_number}")
-        p.drawString(100, 705, f"Désignation: {', '.join(designation.name for designation in commande.designations.all())}")
-        
+        p.drawString(100, 705, f"Désignation: {', '.join(designations)}")
+
         y = 690
         for designation in commande.designations.all():
             for option in designation.options.all():
                 p.drawString(100, y, f"Option: {option.option_name}, Format: {option.format}, Quantité: {option.quantity}, Type de Papier: {option.paper_type}")
                 y -= 15
-        
+
         p.showPage()
         p.save()
 
