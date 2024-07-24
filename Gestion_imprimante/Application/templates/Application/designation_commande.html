@@ -98,22 +98,22 @@ function generateCategoryHTML(category, index, designationId) {
     return `<div class="card mb-3">
                 <div class="card-header">
                     <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input option-checkbox" id="option${designationId}_${index}" name="options[${designationId}][]" value="${category}">
+                        <input type="checkbox" class="custom-control-input option-checkbox" id="option${designationId}_${index}" name="options[]" value="${designationId}_${category}">
                         <label class="custom-control-label" for="option${designationId}_${index}">${category}</label>
                     </div>
                 </div>
                 <div class="card-body details d-none">
                     <div class="form-group">
                         <label for="format${designationId}_${index}">Format:</label>
-                        <input type="text" id="format${designationId}_${index}" name="formats[${designationId}][]" class="form-control">
+                        <input type="text" id="format${designationId}_${index}" name="formats[]" class="form-control">
                     </div>
                     <div class="form-group">
                         <label for="quantity${designationId}_${index}">Quantité:</label>
-                        <input type="number" id="quantity${designationId}_${index}" name="quantities[${designationId}][]" class="form-control">
+                        <input type="number" id="quantity${designationId}_${index}" name="quantities[]" class="form-control">
                     </div>
                     <div class="form-group">
                         <label for="paper_type${designationId}_${index}">Type de Papier:</label>
-                        <input type="text" id="paper_type${designationId}_${index}" name="paper_types[${designationId}][]" class="form-control">
+                        <input type="text" id="paper_type${designationId}_${index}" name="paper_types[]" class="form-control">
                     </div>
                 </div>
             </div>`;

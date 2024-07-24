@@ -152,31 +152,33 @@ def logout_view(request):
 def designation_commande(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
-        # Supprimer les désignations existantes
+        # Clear existing designations and options
         commande.designations.all().delete()
 
-        # Ajouter les nouvelles désignations et options
+        # Retrieve and process the new designations and options
         designations = request.POST.getlist('designations[]')
-        options = request.POST.getlist('options')
-        formats = request.POST.getlist('formats')
-        quantities = request.POST.getlist('quantities')
-        paper_types = request.POST.getlist('paper_types')
+        options_data = request.POST.getlist('options[]')
+        formats_data = request.POST.getlist('formats[]')
+        quantities_data = request.POST.getlist('quantities[]')
+        paper_types_data = request.POST.getlist('paper_types[]')
 
         for i, designation_name in enumerate(designations):
             designation = Designation.objects.create(name=designation_name, commande=commande)
-            for j in range(len(options[i])):
-                Option.objects.create(
-                    designation=designation,
-                    option_name=options[i][j],
-                    format=formats[i][j],
-                    quantity=quantities[i][j],
-                    paper_type=paper_types[i][j]
-                )
+
+            for j in range(len(options_data)):
+                if options_data[j].startswith(f"{i}_"):
+                    Option.objects.create(
+                        designation=designation,
+                        option_name=options_data[j].split('_', 1)[1],
+                        format=formats_data[j],
+                        quantity=quantities_data[j],
+                        paper_type=paper_types_data[j]
+                    )
 
         commande.order_status = 'completed'
         commande.save()
 
-        # Générer le PDF
+        # Generate the PDF
         response = HttpResponse(content_type='application/pdf')
         filename = f"fiche_travail_{commande.order_id}.pdf"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -185,23 +187,23 @@ def designation_commande(request, pk):
         p.drawString(100, 750, f"Numéro de dossier: {commande.order_id}")
         p.drawString(100, 735, f"Date: {commande.date_time}")
         p.drawString(100, 720, f"Nom du client: {commande.company_reference_number}")
-        p.drawString(100, 705, f"Désignation: {', '.join(designations)}")
-
+        p.drawString(100, 705, f"Désignation: {', '.join(designation.name for designation in commande.designations.all())}")
+        
         y = 690
         for designation in commande.designations.all():
             for option in designation.options.all():
                 p.drawString(100, y, f"Option: {option.option_name}, Format: {option.format}, Quantité: {option.quantity}, Type de Papier: {option.paper_type}")
                 y -= 15
-
+        
         p.showPage()
         p.save()
 
-        # Sauvegarder le PDF dans un fichier et le servir
+        # Save the PDF to a file and serve it
         pdf_path = os.path.join(settings.MEDIA_ROOT, filename)
         with open(pdf_path, 'wb') as f:
             f.write(response.content)
 
-        # Ouvrir automatiquement le PDF sur Windows
+        # Automatically open the PDF on Windows
         os.startfile(pdf_path)
 
         return redirect('liste_commandes')
