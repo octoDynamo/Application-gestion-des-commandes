@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import Commande, CommandeLog, Designation, Option
 from .forms import CommandeForm
 from django.db.models import Q
+from django.contrib import messages
 
 def login_view(request):
     if request.method == 'POST':
@@ -19,8 +20,7 @@ def login_view(request):
             login(request, user)
             return redirect('dashboard')
         else:
-            error_message = 'Invalid credentials'
-            return render(request, 'Application/login.html', {'error_message': error_message})
+            messages.error(request, 'Mot de passe ou username oublié')
     return render(request, 'Application/login.html')
 
 def log_action(user, action, commande):

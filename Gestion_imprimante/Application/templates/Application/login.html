@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Page</title>
@@ -69,14 +70,13 @@
 
 <div class="container">
     <div class="left-side">
-        {% load static %}
         <img src="{% static 'Application/images/logo.jpg' %}" alt="Company Logo">
         <h1>Familia Concept</h1>
     </div>
     <div class="right-side">
         <div class="login-container">
             <div class="welcome-text">WELCOME</div>
-            <form method="post">
+            <form method="post" action="{% url 'login' %}">
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="username">Username</label>
@@ -93,13 +93,16 @@
                 <div class="text-center mt-3">
                     <a href="#">Create Account</a>
                 </div>
-                {% if error_message %}
-                    <div class="alert alert-danger mt-3">{{ error_message }}</div>
-                {% endif %}
             </form>
         </div>
     </div>
 </div>
+
+{% if messages %}
+    <script>
+        alert("{% for message in messages %}{{ message }}{% endfor %}");
+    </script>
+{% endif %}
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
