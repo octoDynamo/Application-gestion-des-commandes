@@ -10,6 +10,8 @@ from .models import Commande, CommandeLog, Designation, Option
 from .forms import CommandeForm
 from django.db.models import Q
 from django.contrib import messages
+from django.core.exceptions import ValidationError
+from django.db import transaction
 
 def login_view(request):
     if request.method == 'POST':
@@ -152,33 +154,33 @@ def logout_view(request):
 def designation_commande(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
-        # Clear existing designations and options
+        # Supprimer les désignations existantes
         commande.designations.all().delete()
 
-        # Retrieve and process the new designations and options
+        # Ajouter les nouvelles désignations et options
         designations = request.POST.getlist('designations[]')
-        options_data = request.POST.getlist('options[]')
-        formats_data = request.POST.getlist('formats[]')
-        quantities_data = request.POST.getlist('quantities[]')
-        paper_types_data = request.POST.getlist('paper_types[]')
 
-        for i, designation_name in enumerate(designations):
+        for designation_id, designation_name in enumerate(designations):
             designation = Designation.objects.create(name=designation_name, commande=commande)
+            option_names = request.POST.getlist(f'options[{designation_id}][]')
+            formats = request.POST.getlist(f'formats[{designation_id}][]')
+            quantities = request.POST.getlist(f'quantities[{designation_id}][]')
+            paper_types = request.POST.getlist(f'paper_types[{designation_id}][]')
 
-            for j in range(len(options_data)):
-                if options_data[j].startswith(f"{i}_"):
+            for i in range(len(option_names)):
+                if option_names[i]:
+                    quantity = quantities[i] if quantities[i] else 0
                     Option.objects.create(
                         designation=designation,
-                        option_name=options_data[j].split('_', 1)[1],
-                        format=formats_data[j],
-                        quantity=quantities_data[j],
-                        paper_type=paper_types_data[j]
+                        option_name=option_names[i],
+                        format=formats[i],
+                        quantity=int(quantity),
+                        paper_type=paper_types[i]
                     )
+        commande.order_status = 'completed' 
+        commande.save() 
 
-        commande.order_status = 'completed'
-        commande.save()
-
-        # Generate the PDF
+        # Générer le PDF
         response = HttpResponse(content_type='application/pdf')
         filename = f"fiche_travail_{commande.order_id}.pdf"
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -198,12 +200,12 @@ def designation_commande(request, pk):
         p.showPage()
         p.save()
 
-        # Save the PDF to a file and serve it
+        # Sauvegarder le PDF dans un fichier et le servir
         pdf_path = os.path.join(settings.MEDIA_ROOT, filename)
         with open(pdf_path, 'wb') as f:
             f.write(response.content)
 
-        # Automatically open the PDF on Windows
+        # Ouvrir automatiquement le PDF sur Windows
         os.startfile(pdf_path)
 
         return redirect('liste_commandes')
