@@ -158,26 +158,33 @@ def designation_commande(request, pk):
 
         # Ajouter les nouvelles désignations et options
         designations = request.POST.getlist('designations[]')
+        print("Designations:", designations)  # Debug
 
         for designation_id, designation_name in enumerate(designations):
-            designation = Designation.objects.create(name=designation_name, commande=commande)
-            option_names = request.POST.getlist(f'options[{designation_id}][]')
-            formats = request.POST.getlist(f'formats[{designation_id}][]')
-            quantities = request.POST.getlist(f'quantities[{designation_id}][]')
-            paper_types = request.POST.getlist(f'paper_types[{designation_id}][]')
+            if designation_name:
+                designation = Designation.objects.create(name=designation_name, commande=commande)
+                option_names = request.POST.getlist(f'options[{designation_id}][]')
+                formats = request.POST.getlist(f'formats[{designation_id}][]')
+                quantities = request.POST.getlist(f'quantities[{designation_id}][]')
+                paper_types = request.POST.getlist(f'paper_types[{designation_id}][]')
+                
+                print(f"Options for designation {designation_id}:", option_names, formats, quantities, paper_types)  # Debug
 
-            for i in range(len(option_names)):
-                if option_names[i]:
-                    quantity = quantities[i] if quantities[i] else 0
-                    Option.objects.create(
-                        designation=designation,
-                        option_name=option_names[i],
-                        format=formats[i],
-                        quantity=int(quantity),
-                        paper_type=paper_types[i]
-                    )
-        commande.order_status = 'completed' 
-        commande.save() 
+                # Vérification que toutes les listes ont la même longueur
+                if len(option_names) == len(formats) == len(quantities) == len(paper_types):
+                    for i in range(len(option_names)):
+                        if option_names[i]:
+                            quantity = quantities[i] if quantities[i] else 0
+                            Option.objects.create(
+                                designation=designation,
+                                option_name=option_names[i],
+                                format=formats[i],
+                                quantity=int(quantity),
+                                paper_type=paper_types[i]
+                            )
+
+        commande.order_status = 'completed'
+        commande.save()
 
         # Générer le PDF
         response = HttpResponse(content_type='application/pdf')
@@ -188,13 +195,15 @@ def designation_commande(request, pk):
         p.drawString(100, 750, f"Numéro de dossier: {commande.order_id}")
         p.drawString(100, 735, f"Date: {commande.date_time}")
         p.drawString(100, 720, f"Nom du client: {commande.company_reference_number}")
-        p.drawString(100, 705, f"Désignation: {', '.join(designation.name for designation in commande.designations.all())}")
         
-        y = 690
+        y = 705
         for designation in commande.designations.all():
+            p.drawString(100, y, f"Désignation: {designation.name}")
+            y -= 15
             for option in designation.options.all():
-                p.drawString(100, y, f"Option: {option.option_name}, Format: {option.format}, Quantité: {option.quantity}, Type de Papier: {option.paper_type}")
+                p.drawString(120, y, f"Option: {option.option_name}, Format: {option.format}, Quantité: {option.quantity}, Type de Papier: {option.paper_type}")
                 y -= 15
+            y -= 10
         
         p.showPage()
         p.save()
@@ -205,7 +214,8 @@ def designation_commande(request, pk):
             f.write(response.content)
 
         # Ouvrir automatiquement le PDF sur Windows
-        os.startfile(pdf_path)
+        if os.name == 'nt':  # Check if the OS is Windows
+            os.startfile(pdf_path)
 
         return redirect('liste_commandes')
 
