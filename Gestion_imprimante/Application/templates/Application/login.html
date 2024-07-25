@@ -8,25 +8,38 @@
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #f8f9fa;
+            background: url("{% static 'Application/images/hajar familia_Plan de travail 1.png' %}") no-repeat center center fixed;
+            background-size: cover;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
         }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0); /* Adjust the transparency as needed */
+        }
         .container {
+            position: relative;
             display: flex;
             width: 100%;
             height: 100%;
+            align-items: center;
+            justify-content: center;
         }
         .left-side {
-            background: linear-gradient(to bottom, #e0f7fa, #80deea);
+            background: rgba(255, 255, 255, 0);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 20px;
             width: 50%;
+            height: 100%;
         }
         .left-side img {
             width: 150px;
@@ -38,12 +51,13 @@
             color: #006064;
         }
         .right-side {
-            background-color: white;
+            background-color: rgba(255, 255, 255, 0);
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 30px;
             width: 50%;
+            height: 100%;
         }
         .login-container {
             width: 100%;
@@ -68,10 +82,10 @@
 </head>
 <body>
 
+<div class="overlay"></div>
 <div class="container">
     <div class="left-side">
-        <img src="{% static 'Application/images/logo.jpg' %}" alt="Company Logo">
-        <h1>Familia Concept</h1>
+                <h1>Familia Concept</h1>
     </div>
     <div class="right-side">
         <div class="login-container">

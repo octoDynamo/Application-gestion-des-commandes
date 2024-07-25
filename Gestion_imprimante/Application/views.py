@@ -10,8 +10,6 @@ from .models import Commande, CommandeLog, Designation, Option
 from .forms import CommandeForm
 from django.db.models import Q
 from django.contrib import messages
-from django.core.exceptions import ValidationError
-from django.db import transaction
 
 def login_view(request):
     if request.method == 'POST':
@@ -23,6 +21,7 @@ def login_view(request):
             return redirect('dashboard')
         else:
             messages.error(request, 'Mot de passe ou username oublié')
+            return render(request, 'Application/login.html')
     return render(request, 'Application/login.html')
 
 def log_action(user, action, commande):
