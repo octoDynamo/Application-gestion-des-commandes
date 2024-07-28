@@ -10,6 +10,9 @@ from .models import Commande, CommandeLog, Designation, Option
 from .forms import CommandeForm
 from django.db.models import Q
 from django.contrib import messages
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from user_profiles.models import Profile 
 
 def login_view(request):
     if request.method == 'POST':
@@ -29,8 +32,11 @@ def log_action(user, action, commande):
 
 @login_required
 def dashboard(request):
-    return redirect('liste_commandes')
-
+    user_role = 'director' if request.user.profile.is_director else 'assistant'
+    if request.user.profile.is_director:
+        return render(request, 'Application/dashboard_director.html', {'user_role': user_role})
+    else:
+        return render(request, 'Application/dashboard_assistant.html', {'user_role': user_role})
 @login_required
 def liste_commandes(request):
     query = request.GET.get('q')
