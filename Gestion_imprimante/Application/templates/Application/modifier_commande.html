@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Modifier une Commande{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Modifier une Commande</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Modifier</button>
+    </form>
+    <a href="{% url 'liste_commandes' %}" class="btn btn-secondary mt-3">Retour à la liste des commandes</a>
+</div>
+{% endblock %}

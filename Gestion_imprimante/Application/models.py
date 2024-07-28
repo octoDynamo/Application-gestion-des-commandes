@@ -9,8 +9,10 @@ class Commande(models.Model):
     order_id = models.CharField(max_length=100, unique=True)
     date_time = models.DateTimeField(auto_now_add=True)
     company_reference_number = models.CharField(max_length=100)
+    client_name = models.CharField(max_length=100, default="")  # New field
     order_status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='draft')
-
+    designations_data = models.JSONField(default=list)  # Renamed field
+    options_data = models.JSONField(default=dict)  # Renamed field
     def __str__(self):
         return self.order_id
 
