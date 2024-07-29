@@ -10,9 +10,6 @@ from .models import Commande, CommandeLog, Designation, Option
 from .forms import CommandeForm
 from django.db.models import Q
 from django.contrib import messages
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from user_profiles.models import Profile 
 
 def login_view(request):
     if request.method == 'POST':
@@ -32,11 +29,8 @@ def log_action(user, action, commande):
 
 @login_required
 def dashboard(request):
-    user_role = 'director' if request.user.profile.is_director else 'assistant'
-    if request.user.profile.is_director:
-        return render(request, 'Application/dashboard_director.html', {'user_role': user_role})
-    else:
-        return render(request, 'Application/dashboard_assistant.html', {'user_role': user_role})
+    return redirect('liste_commandes')
+
 @login_required
 def liste_commandes(request):
     query = request.GET.get('q')
@@ -49,8 +43,8 @@ def liste_commandes(request):
         )
     else:
         commandes = Commande.objects.all()
-    user_role = 'directeur' if request.user.groups.filter(name='Directeurs').exists() else 'assistant'
-    return render(request, 'Application/liste_commandes.html', {'commandes': commandes, 'user_role': user_role})
+    is_director = request.user.groups.filter(name='Directeurs').exists()
+    return render(request, 'Application/liste_commandes.html', {'commandes': commandes, 'is_director': is_director})
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Assistants').exists())
@@ -58,12 +52,11 @@ def ajouter_commande(request):
     if request.method == 'POST':
         form = CommandeForm(request.POST)
         if form.is_valid():
-            # Save the commande as a draft
             commande = form.save(commit=False)
-            commande.order_status = 'draft'  # or another status indicating it's incomplete
+            # Additional fields not in the form
+            commande.order_status = 'draft'
             commande.save()
-            log_action(request.user, 'add', commande)
-            return redirect('designation_commande', pk=commande.id)
+            return redirect('designation_commande', pk=commande.order_id)
     else:
         form = CommandeForm()
     return render(request, 'Application/ajouter_commande.html', {'form': form})

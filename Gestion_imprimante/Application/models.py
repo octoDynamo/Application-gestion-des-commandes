@@ -1,23 +1,21 @@
-from django.contrib.auth.models import User
 from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
+from django.contrib.auth.models import User
 
 class Commande(models.Model):
-    STATUS_CHOICES = [
-        ('draft', 'Draft'),
-        ('completed', 'Completed'),
-    ]
-    order_id = models.CharField(max_length=100, unique=True)
+    order_id = models.AutoField(primary_key=True)  # Auto-incremented primary key
     date_time = models.DateTimeField(auto_now_add=True)
     company_reference_number = models.CharField(max_length=100)
     client_name = models.CharField(max_length=100, default="")  # New field
-    order_status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='draft')
+    adresse = models.CharField(max_length=255, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    fax = models.CharField(max_length=50, blank=True, null=True)
+    ice = models.CharField(max_length=50, blank=True, null=True)
+    infographiste = models.CharField(max_length=100, blank=True, null=True)
+    order_status = models.CharField(max_length=50, default='draft')
     designations_data = models.JSONField(default=list)  # Renamed field
     options_data = models.JSONField(default=dict)  # Renamed field
     def __str__(self):
-        return self.order_id
+        return f"Commande {self.order_id}: {self.client_name}"
 
 class Designation(models.Model):
     name = models.CharField(max_length=255)
