@@ -1,29 +1,31 @@
-{% extends "base_no_nav.html" %}
+{% extends "base.html" %}
+
 {% block title %}Liste des Bons de Livraison{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h1 class="text-center mb-4">Liste des Bons de Livraison</h1>
-    <table class="table table-bordered">
+<h1 class="text-center my-4">Liste des Bons de Livraison</h1>
+<div class="table-responsive">
+    <table class="table table-striped table-bordered">
         <thead>
             <tr>
                 <th>Numéro de Dossier</th>
                 <th>Référence Client</th>
                 <th>Nom du Client</th>
-                <th>Date</th>
-                <th>Status</th>
+                <th>Date et Heure</th>
+                <th>Statut</th>
                 <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            {% for bon_livraison in bons_livraison %}
+            {% for commande in commandes %}
             <tr>
-                <td>{{ bon_livraison.order_id }}</td>
-                <td>{{ bon_livraison.company_reference_number }}</td>
-                <td>{{ bon_livraison.client_name }}</td>
-                <td>{{ bon_livraison.date_time }}</td>
-                <td>{{ bon_livraison.order_status }}</td>
+                <td>{{ commande.order_id }}</td>
+                <td>{{ commande.company_reference_number }}</td>
+                <td>{{ commande.client_name }}</td>
+                <td>{{ commande.date_time }}</td>
+                <td>{{ commande.order_status }}</td>
                 <td>
-                    <a href="{% url 'generer_bon_livraison' bon_livraison.pk %}" class="btn btn-sm btn-secondary"><i class="fas fa-file-invoice-dollar"></i></a>
+                    <a href="{% url 'generer_bon_livraison' commande.pk %}" class="btn btn-sm btn-secondary"><i class="fas fa-truck"></i></a>
                 </td>
             </tr>
             {% endfor %}

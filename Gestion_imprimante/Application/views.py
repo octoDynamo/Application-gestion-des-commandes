@@ -49,26 +49,26 @@ def liste_commandes(request):
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def liste_devis(request):
-    devis = Commande.objects.filter(order_status='devis')
-    return render(request, 'Application/liste_devis.html', {'devis': devis})
+    commandes = Commande.objects.all()
+    return render(request, 'Application/liste_devis.html', {'commandes': commandes})
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def liste_factures(request):
-    factures = Commande.objects.filter(order_status='facture')
-    return render(request, 'Application/liste_factures.html', {'factures': factures})
+    commandes = Commande.objects.all()
+    return render(request, 'Application/liste_factures.html', {'commandes': commandes})
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def liste_bon_livraison(request):
-    bons_livraison = Commande.objects.filter(order_status='bon_livraison')
-    return render(request, 'Application/liste_bon_livraison.html', {'bons_livraison': bons_livraison})
+    commandes = Commande.objects.all()
+    return render(request, 'Application/liste_bon_livraison.html', {'commandes': commandes})
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def situation_client(request):
-    situations = Commande.objects.filter(order_status='situation_client')
-    return render(request, 'Application/situation_client.html', {'situations': situations})
+    commandes = Commande.objects.all()
+    return render(request, 'Application/situation_client.html', {'commandes': commandes})
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Assistants').exists())
@@ -207,8 +207,32 @@ def designation_commande(request, pk):
 def generer_facture(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
+        quantities = request.POST.getlist('quantity[]')
+        designations = request.POST.getlist('designation[]')
+        options = request.POST.getlist('option[]')
+        formats = request.POST.getlist('format[]')
+        paper_types = request.POST.getlist('paper_type[]')
+        unit_prices = request.POST.getlist('unit_price[]')
+        total_prices = []
+
+        # Calculate total prices
+        for unit_price, quantity in zip(unit_prices, quantities):
+            try:
+                unit_price = float(unit_price)
+                total_prices.append(unit_price * quantity)
+            except ValueError:
+                total_prices.append(0)  # Default to 0 if parsing fails
+
+        # Generate the PDF using WeasyPrint
         html_string = render_to_string('Application/facture_template.html', {
-            'commande': commande
+            'commande': commande,
+            'quantities': quantities,
+            'designations': designations,
+            'options': options,
+            'formats': formats,
+            'paper_types': paper_types,
+            'unit_prices': unit_prices,
+            'total_prices': total_prices
         })
         html = HTML(string=html_string)
         pdf = html.write_pdf()
@@ -235,8 +259,20 @@ def generer_facture(request, pk):
 def generer_bon_livraison(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
-        html_string = render_to_string('Application/bon_livraison_template.html', {
-            'commande': commande
+        quantities = request.POST.getlist('quantity[]')
+        designations = request.POST.getlist('designation[]')
+        options = request.POST.getlist('option[]')
+        formats = request.POST.getlist('format[]')
+        paper_types = request.POST.getlist('paper_type[]')
+
+        # Generate the PDF using WeasyPrint
+        html_string = render_to_string('Application/bon_livrairson_template.html', {
+            'commande': commande,
+            'quantities': quantities,
+            'designations': designations,
+            'options': options,
+            'formats': formats,
+            'paper_types': paper_types,
         })
         html = HTML(string=html_string)
         pdf = html.write_pdf()

@@ -1,26 +1,28 @@
-{% extends "base_no_nav.html" %}
-{% block title %}Situation Client{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}Situation des Clients{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h1 class="text-center mb-4">Situation Client</h1>
-    <table class="table table-bordered">
+<h1 class="text-center my-4">Situation des Clients</h1>
+<div class="table-responsive">
+    <table class="table table-striped table-bordered">
         <thead>
             <tr>
-                <th>Client</th>
                 <th>Numéro de Dossier</th>
-                <th>Montant</th>
-                <th>Date</th>
-                <th>Status</th>
+                <th>Référence Client</th>
+                <th>Nom du Client</th>
+                <th>Date et Heure</th>
+                <th>Statut</th>
             </tr>
         </thead>
         <tbody>
-            {% for situation in situations %}
+            {% for commande in commandes %}
             <tr>
-                <td>{{ situation.client_name }}</td>
-                <td>{{ situation.order_id }}</td>
-                <td>{{ situation.amount }}</td>
-                <td>{{ situation.date_time }}</td>
-                <td>{{ situation.order_status }}</td>
+                <td>{{ commande.order_id }}</td>
+                <td>{{ commande.company_reference_number }}</td>
+                <td>{{ commande.client_name }}</td>
+                <td>{{ commande.date_time }}</td>
+                <td>{{ commande.order_status }}</td>
             </tr>
             {% endfor %}
         </tbody>
