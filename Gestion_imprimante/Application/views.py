@@ -1,17 +1,15 @@
 import os
 from django.conf import settings
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.template.loader import render_to_string
 from .models import Commande, CommandeLog, Designation, Option
 from .forms import CommandeForm
 from django.db.models import Q
 from django.contrib import messages
 from weasyprint import HTML
-from django.template.loader import render_to_string  # Add this import
 
 def login_view(request):
     if request.method == 'POST':
@@ -55,7 +53,6 @@ def ajouter_commande(request):
         form = CommandeForm(request.POST)
         if form.is_valid():
             commande = form.save(commit=False)
-            # Additional fields not in the form
             commande.order_status = 'draft'
             commande.save()
             return redirect('designation_commande', pk=commande.order_id)
@@ -124,7 +121,8 @@ def generer_devis(request, pk):
             f.write(pdf)
 
         # Automatically open the PDF on Windows
-        os.startfile(pdf_path)
+        if os.name == 'nt':
+            os.startfile(pdf_path)
 
         return redirect('liste_commandes')
 
@@ -137,21 +135,15 @@ def logout_view(request):
 def designation_commande(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
-        # Supprimer les désignations existantes
         commande.designations.all().delete()
 
-        # Ajouter les nouvelles désignations et options
         designations = request.POST.getlist('designations[]')
-        print("Designations:", designations)  # Debug
-
         for designation_id, designation_name in enumerate(designations):
             designation = Designation.objects.create(name=designation_name, commande=commande)
             option_names = request.POST.getlist(f'options[{designation_id}][]')
             formats = request.POST.getlist(f'formats[{designation_id}][]')
             quantities = request.POST.getlist(f'quantities[{designation_id}][]')
             paper_types = request.POST.getlist(f'paper_types[{designation_id}][]')
-            
-            print(f"Options for {designation_name}: {option_names}")  # Debug
 
             for i in range(len(option_names)):
                 if option_names[i]:
@@ -167,7 +159,6 @@ def designation_commande(request, pk):
         commande.order_status = 'completed'
         commande.save()
 
-        # Générer le PDF using WeasyPrint
         html_string = render_to_string('Application/fiche_template.html', {
             'commande': commande
         })
@@ -177,13 +168,11 @@ def designation_commande(request, pk):
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="fiche_travail_{commande.order_id}.pdf"'
 
-        # Save the PDF to a file and serve it
         pdf_path = os.path.join(settings.MEDIA_ROOT, f"fiche_travail_{commande.order_id}.pdf")
         with open(pdf_path, 'wb') as f:
             f.write(pdf)
 
-        # Automatically open the PDF on Windows
-        if os.name == 'nt':  # Check if the OS is Windows
+        if os.name == 'nt':
             os.startfile(pdf_path)
 
         return redirect('liste_commandes')
