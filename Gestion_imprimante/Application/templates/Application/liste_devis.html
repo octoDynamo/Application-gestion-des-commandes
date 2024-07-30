@@ -1,0 +1,33 @@
+{% extends "base_no_nav.html" %}
+{% block title %}Liste des Devis{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Liste des Devis</h1>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Numéro de Dossier</th>
+                <th>Référence Client</th>
+                <th>Nom du Client</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for devis in devis %}
+            <tr>
+                <td>{{ devis.order_id }}</td>
+                <td>{{ devis.company_reference_number }}</td>
+                <td>{{ devis.client_name }}</td>
+                <td>{{ devis.date_time }}</td>
+                <td>{{ devis.order_status }}</td>
+                <td>
+                    <a href="{% url 'generer_devis' devis.pk %}" class="btn btn-sm btn-secondary"><i class="fas fa-file-invoice-dollar"></i></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

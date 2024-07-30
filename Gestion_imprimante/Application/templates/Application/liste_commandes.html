@@ -28,9 +28,6 @@
                 <td>
                     <a href="{% url 'modifier_commande' commande.pk %}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
                     <a href="{% url 'supprimer_commande' commande.pk %}" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
-                    {% if is_director %}
-                    <a href="{% url 'generer_devis' commande.pk %}" class="btn btn-sm btn-secondary"><i class="fas fa-file-invoice-dollar"></i></a>
-                    {% endif %}
                 </td>
             </tr>
             {% endfor %}

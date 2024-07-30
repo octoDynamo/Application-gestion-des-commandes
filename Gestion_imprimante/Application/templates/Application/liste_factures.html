@@ -1,0 +1,33 @@
+{% extends "base_no_nav.html" %}
+{% block title %}Liste des Factures{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Liste des Factures</h1>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Numéro de Dossier</th>
+                <th>Référence Client</th>
+                <th>Nom du Client</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for facture in factures %}
+            <tr>
+                <td>{{ facture.order_id }}</td>
+                <td>{{ facture.company_reference_number }}</td>
+                <td>{{ facture.client_name }}</td>
+                <td>{{ facture.date_time }}</td>
+                <td>{{ facture.order_status }}</td>
+                <td>
+                    <a href="{% url 'generer_facture' facture.pk %}" class="btn btn-sm btn-secondary"><i class="fas fa-file-invoice-dollar"></i></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

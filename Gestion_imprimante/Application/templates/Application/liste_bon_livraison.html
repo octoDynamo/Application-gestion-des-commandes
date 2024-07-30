@@ -1,0 +1,33 @@
+{% extends "base_no_nav.html" %}
+{% block title %}Liste des Bons de Livraison{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Liste des Bons de Livraison</h1>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Numéro de Dossier</th>
+                <th>Référence Client</th>
+                <th>Nom du Client</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bon_livraison in bons_livraison %}
+            <tr>
+                <td>{{ bon_livraison.order_id }}</td>
+                <td>{{ bon_livraison.company_reference_number }}</td>
+                <td>{{ bon_livraison.client_name }}</td>
+                <td>{{ bon_livraison.date_time }}</td>
+                <td>{{ bon_livraison.order_status }}</td>
+                <td>
+                    <a href="{% url 'generer_bon_livraison' bon_livraison.pk %}" class="btn btn-sm btn-secondary"><i class="fas fa-file-invoice-dollar"></i></a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

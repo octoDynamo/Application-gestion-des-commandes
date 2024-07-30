@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Situation Client</title>
+    <style>
+        /* Add necessary styles for your client situation report PDF */
+    </style>
+</head>
+<body>
+    <h1>Situation des factures pour le client: {{ client_ref }}</h1>
+    <h2>Commandes impayées:</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Numéro de dossier</th>
+                <th>Date</th>
+                <th>Statut</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for commande in commandes %}
+                <tr>
+                    <td>{{ commande.order_id }}</td>
+                    <td>{{ commande.date_time }}</td>
+                    <td>{{ commande.order_status }}</td>
+                    <td>{{ commande.total }}</td> <!-- Assuming you have a 'total' field in your Commande model -->
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

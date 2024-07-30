@@ -47,6 +47,30 @@ def liste_commandes(request):
     return render(request, 'Application/liste_commandes.html', {'commandes': commandes, 'is_director': is_director})
 
 @login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def liste_devis(request):
+    devis = Commande.objects.filter(order_status='devis')
+    return render(request, 'Application/liste_devis.html', {'devis': devis})
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def liste_factures(request):
+    factures = Commande.objects.filter(order_status='facture')
+    return render(request, 'Application/liste_factures.html', {'factures': factures})
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def liste_bon_livraison(request):
+    bons_livraison = Commande.objects.filter(order_status='bon_livraison')
+    return render(request, 'Application/liste_bon_livraison.html', {'bons_livraison': bons_livraison})
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def situation_client(request):
+    situations = Commande.objects.filter(order_status='situation_client')
+    return render(request, 'Application/situation_client.html', {'situations': situations})
+
+@login_required
 @user_passes_test(lambda u: u.groups.filter(name='Assistants').exists())
 def ajouter_commande(request):
     if request.method == 'POST':
@@ -178,6 +202,76 @@ def designation_commande(request, pk):
         return redirect('liste_commandes')
 
     return render(request, 'Application/designation_commande.html', {'commande': commande})
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def generer_facture(request, pk):
+    commande = get_object_or_404(Commande, pk=pk)
+    if request.method == 'POST':
+        html_string = render_to_string('Application/facture_template.html', {'commande': commande})
+        html = HTML(string=html_string)
+        pdf = html.write_pdf()
+
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="facture_{commande.order_id}.pdf"'
+
+        pdf_path = os.path.join(settings.MEDIA_ROOT, f"facture_{commande.order_id}.pdf")
+        with open(pdf_path, 'wb') as f:
+            f.write(pdf)
+
+        if os.name == 'nt':
+            os.startfile(pdf_path)
+
+        return redirect('liste_commandes')
+
+    return render(request, 'Application/generer_facture.html', {'commande': commande})
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def generer_bon_livraison(request, pk):
+    commande = get_object_or_404(Commande, pk=pk)
+    if request.method == 'POST':
+        html_string = render_to_string('Application/bon_livraison_template.html', {'commande': commande})
+        html = HTML(string=html_string)
+        pdf = html.write_pdf()
+
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="bon_livraison_{commande.order_id}.pdf"'
+
+        pdf_path = os.path.join(settings.MEDIA_ROOT, f"bon_livraison_{commande.order_id}.pdf")
+        with open(pdf_path, 'wb') as f:
+            f.write(pdf)
+
+        if os.name == 'nt':
+            os.startfile(pdf_path)
+
+        return redirect('liste_commandes')
+
+    return render(request, 'Application/generer_bon_livraison.html', {'commande': commande})
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def situation_client(request):
+    if request.method == 'POST':
+        client_ref = request.POST.get('client_ref')
+        commandes = Commande.objects.filter(company_reference_number=client_ref, order_status='unpaid')
+        html_string = render_to_string('Application/situation_client_template.html', {'commandes': commandes, 'client_ref': client_ref})
+        html = HTML(string=html_string)
+        pdf = html.write_pdf()
+
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="situation_client_{client_ref}.pdf"'
+
+        pdf_path = os.path.join(settings.MEDIA_ROOT, f"situation_client_{client_ref}.pdf")
+        with open(pdf_path, 'wb') as f:
+            f.write(pdf)
+
+        if os.name == 'nt':
+            os.startfile(pdf_path)
+
+        return redirect('liste_commandes')
+
+    return render(request, 'Application/situation_client.html')
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())

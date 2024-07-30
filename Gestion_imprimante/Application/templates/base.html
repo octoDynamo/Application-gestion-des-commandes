@@ -76,6 +76,13 @@
         .glow-button {
             animation: glow 1.5s ease-in-out infinite alternate;
         }
+        .content {
+            flex: 1;
+        }
+        .footer-nav {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -97,6 +104,23 @@
                     </form>
                 </div>
             </li>
+            {% if is_director %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'liste_commandes' %}">Commandes</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'liste_devis' %}">Devis</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'liste_factures' %}">Factures</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'liste_bon_livraison' %}">Bons de Livraison</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'situation_client' %}">Situation Client</a>
+            </li>
+            {% endif %}
             {% if not is_director %}
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'ajouter_commande' %}"><i class="fas fa-plus"></i></a>

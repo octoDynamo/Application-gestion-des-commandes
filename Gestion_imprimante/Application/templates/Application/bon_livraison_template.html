@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bon de Livraison</title>
+    <style>
+        /* Add necessary styles for your delivery note PDF */
+    </style>
+</head>
+<body>
+    <h1>Bon de Livraison pour Commande: {{ commande.order_id }}</h1>
+    <p>Date: {{ commande.date_time }}</p>
+    <p>Nom du client: {{ commande.company_reference_number }}</p>
+    
+    <h2>Détails de la commande:</h2>
+    {% for designation in commande.designations.all %}
+        <h3>Désignation: {{ designation.name }}</h3>
+        {% for option in designation.options.all %}
+            <p>Option: {{ option.option_name }}, Format: {{ option.format }}, Quantité: {{ option.quantity }}, Type de Papier: {{ option.paper_type }}</p>
+        {% endfor %}
+    {% endfor %}
+</body>
+</html>
