@@ -10,6 +10,8 @@ from .models import Commande, CommandeLog, Designation, Option
 from .forms import CommandeForm
 from django.db.models import Q
 from django.contrib import messages
+from weasyprint import HTML
+from django.template.loader import render_to_string  # Add this import
 
 def login_view(request):
     if request.method == 'POST':
@@ -99,44 +101,27 @@ def generer_devis(request, pk):
             except ValueError:
                 total_prices.append(0)  # Default to 0 if parsing fails
 
-        # Generate the PDF
-        response = HttpResponse(content_type='application/pdf')
-        filename = f"devis_{commande.order_id}.pdf"
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        # Generate the PDF using WeasyPrint
+        html_string = render_to_string('Application/devis_template.html', {
+            'commande': commande,
+            'quantities': quantities,
+            'designations': designations,
+            'options': options,
+            'formats': formats,
+            'paper_types': paper_types,
+            'unit_prices': unit_prices,
+            'total_prices': total_prices
+        })
+        html = HTML(string=html_string)
+        pdf = html.write_pdf()
 
-        p = canvas.Canvas(response, pagesize=letter)
-        p.drawString(100, 750, f"Devis pour Commande: {commande.order_id}")
-        p.drawString(100, 735, f"Date et Heure: {commande.date_time}")
-        p.drawString(100, 720, f"Company Reference Number: {commande.company_reference_number}")
-        p.drawString(100, 705, f"Order Status: {commande.order_status}")
-
-        y = 680
-        p.drawString(100, y, "Quantité")
-        p.drawString(200, y, "Désignation")
-        p.drawString(300, y, "Option")
-        p.drawString(400, y, "Format")
-        p.drawString(500, y, "Type de Papier")
-        p.drawString(600, y, "Prix Unitaire HT")
-        p.drawString(700, y, "Prix Total HT")
-        y -= 20
-
-        for qty, des, opt, fmt, pt, up, tp in zip(quantities, designations, options, formats, paper_types, unit_prices, total_prices):
-            p.drawString(100, y, str(qty))
-            p.drawString(200, y, des)
-            p.drawString(300, y, opt)
-            p.drawString(400, y, fmt)
-            p.drawString(500, y, pt)
-            p.drawString(600, y, str(up))
-            p.drawString(700, y, str(tp))
-            y -= 20
-
-        p.showPage()
-        p.save()
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="devis_{commande.order_id}.pdf"'
 
         # Save the PDF to a file and serve it
-        pdf_path = os.path.join(settings.MEDIA_ROOT, filename)
+        pdf_path = os.path.join(settings.MEDIA_ROOT, f"devis_{commande.order_id}.pdf")
         with open(pdf_path, 'wb') as f:
-            f.write(response.content)
+            f.write(pdf)
 
         # Automatically open the PDF on Windows
         os.startfile(pdf_path)
@@ -182,34 +167,22 @@ def designation_commande(request, pk):
         commande.order_status = 'completed'
         commande.save()
 
-        # Générer le PDF
-        response = HttpResponse(content_type='application/pdf')
-        filename = f"fiche_travail_{commande.order_id}.pdf"
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        # Générer le PDF using WeasyPrint
+        html_string = render_to_string('Application/fiche_template.html', {
+            'commande': commande
+        })
+        html = HTML(string=html_string)
+        pdf = html.write_pdf()
 
-        p = canvas.Canvas(response, pagesize=letter)
-        p.drawString(100, 750, f"Numéro de dossier: {commande.order_id}")
-        p.drawString(100, 735, f"Date: {commande.date_time}")
-        p.drawString(100, 720, f"Nom du client: {commande.company_reference_number}")
-        
-        y = 690
-        for designation in commande.designations.all():
-            p.drawString(100, y, f"Désignation: {designation.name}")
-            y -= 15
-            for option in designation.options.all():
-                p.drawString(100, y, f"Option: {option.option_name}, Format: {option.format}, Quantité: {option.quantity}, Type de Papier: {option.paper_type}")
-                y -= 15
-            y -= 10
-        
-        p.showPage()
-        p.save()
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="fiche_travail_{commande.order_id}.pdf"'
 
-        # Sauvegarder le PDF dans un fichier et le servir
-        pdf_path = os.path.join(settings.MEDIA_ROOT, filename)
+        # Save the PDF to a file and serve it
+        pdf_path = os.path.join(settings.MEDIA_ROOT, f"fiche_travail_{commande.order_id}.pdf")
         with open(pdf_path, 'wb') as f:
-            f.write(response.content)
+            f.write(pdf)
 
-        # Ouvrir automatiquement le PDF sur Windows
+        # Automatically open the PDF on Windows
         if os.name == 'nt':  # Check if the OS is Windows
             os.startfile(pdf_path)
 

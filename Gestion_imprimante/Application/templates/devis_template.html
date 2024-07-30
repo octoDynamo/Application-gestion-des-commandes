@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Devis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Devis pour Commande: {{ commande.order_id }}</h1>
+        <p>Date et Heure: {{ commande.date_time }}</p>
+        <p>Company Reference Number: {{ commande.company_reference_number }}</p>
+        <p>Order Status: {{ commande.order_status }}</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Quantité</th>
+                    <th>Désignation</th>
+                    <th>Option</th>
+                    <th>Format</th>
+                    <th>Type de Papier</th>
+                    <th>Prix Unitaire HT</th>
+                    <th>Prix Total HT</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for qty, des, opt, fmt, pt, up, tp in zip(quantities, designations, options, formats, paper_types, unit_prices, total_prices) %}
+                <tr>
+                    <td>{{ qty }}</td>
+                    <td>{{ des }}</td>
+                    <td>{{ opt }}</td>
+                    <td>{{ fmt }}</td>
+                    <td>{{ pt }}</td>
+                    <td>{{ up }}</td>
+                    <td>{{ tp }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
