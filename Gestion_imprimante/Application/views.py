@@ -212,15 +212,16 @@ def generer_facture(request, pk):
         unit_prices = request.POST.getlist('unit_price[]')
         total_prices = []
 
-        for quantity, unit_price, option in zip(quantities, unit_prices, Option.objects.filter(designation__commande=commande)):
-            if unit_price and quantity:
-                total_price = float(unit_price) * int(quantity)
-                total_prices.append(total_price)
+        for designation in commande.designations.all():
+            for option in designation.options.all():
+                idx = list(commande.designations.all()).index(designation)
+                unit_price = request.POST.getlist('unit_price[]')[idx]
+                option.unit_price = unit_price
+                option.save()
 
-                # Save the price to the database
-                prix, created = Prix.objects.get_or_create(option=option)
-                prix.unit_price = float(unit_price)
-                prix.save()
+        for quantity, unit_price in zip(quantities, unit_prices):
+            if unit_price and quantity:
+                total_prices.append(float(unit_price) * int(quantity))
             else:
                 total_prices.append(0)
 
