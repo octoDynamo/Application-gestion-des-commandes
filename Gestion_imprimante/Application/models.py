@@ -11,7 +11,8 @@ class Commande(models.Model):
     fax = models.CharField(max_length=50, blank=True, null=True)
     ice = models.CharField(max_length=50, blank=True, null=True)
     infographiste = models.CharField(max_length=100, blank=True, null=True)
-    order_status = models.CharField(max_length=50, choices=[ ('draft', 'Draft'), 
+    order_status = models.CharField(max_length=50, choices=[
+        ('draft', 'Draft'), 
         ('completed', 'Completed'), 
         ('devis', 'Devis'), 
         ('facture', 'Facture'), 
@@ -20,6 +21,7 @@ class Commande(models.Model):
     ])
     designations_data = models.JSONField(default=list)  # Renamed field
     options_data = models.JSONField(default=dict)  # Renamed field
+
     def __str__(self):
         return f"Commande {self.order_id}: {self.client_name}"
 
@@ -36,9 +38,17 @@ class Option(models.Model):
     format = models.CharField(max_length=255)
     quantity = models.PositiveIntegerField()
     paper_type = models.CharField(max_length=255)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
         return self.option_name
+
+class Prix(models.Model):
+    option = models.ForeignKey(Option, related_name='prices', on_delete=models.CASCADE)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"Prix for {self.option.option_name} - {self.unit_price}"
 
 class CommandeLog(models.Model):
     ACTION_CHOICES = [

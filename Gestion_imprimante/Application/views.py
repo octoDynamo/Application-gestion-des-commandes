@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.template.loader import render_to_string
-from .models import Commande, CommandeLog, Designation, Option
+from .models import Commande, CommandeLog, Designation, Option, Prix
 from .forms import CommandeForm
 from django.db.models import Q
 from django.contrib import messages
@@ -206,33 +206,38 @@ def designation_commande(request, pk):
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def generer_facture(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
+    
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
-        designations = request.POST.getlist('designation[]')
-        options = request.POST.getlist('option[]')
-        formats = request.POST.getlist('format[]')
-        paper_types = request.POST.getlist('paper_type[]')
         unit_prices = request.POST.getlist('unit_price[]')
         total_prices = []
 
-        # Calculate total prices
-        for unit_price, quantity in zip(unit_prices, quantities):
-            try:
-                unit_price = float(unit_price)
-                total_prices.append(unit_price * quantity)
-            except ValueError:
-                total_prices.append(0)  # Default to 0 if parsing fails
+        for quantity, unit_price, option in zip(quantities, unit_prices, Option.objects.filter(designation__commande=commande)):
+            if unit_price and quantity:
+                total_price = float(unit_price) * int(quantity)
+                total_prices.append(total_price)
+
+                # Save the price to the database
+                prix, created = Prix.objects.get_or_create(option=option)
+                prix.unit_price = float(unit_price)
+                prix.save()
+            else:
+                total_prices.append(0)
+
+
+        total_ht = sum(total_prices)
+        tva_20 = total_ht * 0.2
+        total_ttc = total_ht + tva_20
 
         # Generate the PDF using WeasyPrint
         html_string = render_to_string('Application/facture_template.html', {
             'commande': commande,
             'quantities': quantities,
-            'designations': designations,
-            'options': options,
-            'formats': formats,
-            'paper_types': paper_types,
             'unit_prices': unit_prices,
-            'total_prices': total_prices
+            'total_prices': total_prices,
+            'total_ht': total_ht,
+            'tva_20': tva_20,
+            'total_ttc': total_ttc
         })
         html = HTML(string=html_string)
         pdf = html.write_pdf()
@@ -247,12 +252,18 @@ def generer_facture(request, pk):
         if os.name == 'nt':
             os.startfile(pdf_path)
 
-        commande.order_status = 'facture'
-        commande.save()
-
         return redirect('liste_factures')
 
-    return render(request, 'Application/generer_facture.html', {'commande': commande})
+    total_ht = sum(option.unit_price * option.quantity if option.unit_price else 0 for designation in commande.designations.all() for option in designation.options.all())
+    tva_20 = total_ht * 0.2
+    total_ttc = total_ht + tva_20
+
+    return render(request, 'Application/generer_facture.html', {
+        'commande': commande,
+        'total_ht': total_ht,
+        'tva_20': tva_20,
+        'total_ttc': total_ttc
+    })
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())

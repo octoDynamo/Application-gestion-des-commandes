@@ -1,24 +1,104 @@
+{% load custom_filters %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Facture</title>
+    <title>Facture {{ commande.order_id }}</title>
     <style>
-        /* Add necessary styles for your invoice PDF */
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .invoice-box {
+            width: 100%;
+            padding: 30px;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+            font-size: 16px;
+            line-height: 24px;
+            color: #555555d4;
+        }
+        table {
+            width: 100%;
+            line-height: inherit;
+            text-align: left;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 5px;
+            text-align: left;
+        }
+        .invoice-box table tr.heading th {
+            background: #eee;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+        }
+        .total {
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
-    <h1>Facture pour Commande: {{ commande.order_id }}</h1>
-    <p>Date: {{ commande.date_time }}</p>
-    <p>Nom du client: {{ commande.company_reference_number }}</p>
-    <p>Statut: {{ commande.order_status }}</p>
-    
-    <h2>Détails de la commande:</h2>
-    {% for designation in commande.designations.all %}
-        <h3>Désignation: {{ designation.name }}</h3>
-        {% for option in designation.options.all %}
-            <p>Option: {{ option.option_name }}, Format: {{ option.format }}, Quantité: {{ option.quantity }}, Type de Papier: {{ option.paper_type }}</p>
-        {% endfor %}
-    {% endfor %}
+    <div class="invoice-box">
+        <h2>Facture</h2>
+        <table>
+            <tr>
+                <th>Numéro de Dossier</th>
+                <td>{{ commande.order_id }}</td>
+            </tr>
+            <tr>
+                <th>Date</th>
+                <td>{{ commande.date_time }}</td>
+            </tr>
+            <tr>
+                <th>Nom du Client</th>
+                <td>{{ commande.client_name }}</td>
+            </tr>
+        </table>
+        <br>
+        <table>
+            <thead>
+                <tr class="heading">
+                    <th>Article</th>
+                    <th>Designations</th>
+                    <th>QTE</th>
+                    <th>P.U H.T</th>
+                    <th>P.T H.T</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for designation in commande.designations.all %}
+                {% for option in designation.options.all %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ designation.name }}<br>
+                        {% if option.option_name %} * {{ option.option_name }}{% endif %}
+                        {% if option.format %} * {{ option.format }}{% endif %}
+                        {% if option.paper_type %} * {{ option.paper_type }}{% endif %}
+                    </td>
+                    <td> {{ option.quantity|default_zero }} </td>
+                    <td>{{ option.unit_price|default_zero|floatformat:2 }}</td>
+                    <td>{{ option.unit_price|default_zero|multiply:option.quantity|default_zero|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+                {% endfor %}
+                <tr class="total">
+                    <td colspan="4">TOTAL HT</td>
+                    <td>{{ total_ht|floatformat:2 }}</td>
+                </tr>
+                <tr class="total">
+                    <td colspan="4">TVA 20%</td>
+                    <td>{{ tva_20|floatformat:2 }}</td>
+                </tr>
+                <tr class="total">
+                    <td colspan="4">TOTAL TTC</td>
+                    <td>{{ total_ttc|floatformat:2 }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

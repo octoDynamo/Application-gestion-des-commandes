@@ -1,0 +1,92 @@
+{% extends "base_no_nav.html" %}
+
+{% load custom_filters %}
+
+{% block title %}Générer Facture{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Générer Facture</h2>
+    <form method="post">
+        {% csrf_token %}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Article</th>
+                    <th>Designations</th>
+                    <th>QTE</th>
+                    <th>P.U H.T</th>
+                    <th>P.T H.T</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for designation in commande.designations.all %}
+                {% for option in designation.options.all %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ designation.name }}<br>
+                        {% if option.option_name %} * {{ option.option_name }}{% endif %}
+                        {% if option.format %} * {{ option.format }}{% endif %}
+                        {% if option.paper_type %} * {{ option.paper_type }}{% endif %}
+                    </td>
+                    <td>{{ option.quantity|default_zero }}</td>
+                    <td><input type="number" name="unit_price[]" class="form-control" step="0.01" value="{{ option.unit_price|default_zero }}"></td>
+                    <td>{{ option.unit_price|default_zero|multiply:option.quantity|default_zero }}</td>
+                </tr>
+                {% endfor %}
+                {% endfor %}
+                <tr>
+                    <td colspan="4">TOTAL HT</td>
+                    <td id="total_ht">{{ total_ht }}</td>
+                </tr>
+                <tr>
+                    <td colspan="4">TVA 20%</td>
+                    <td id="tva_20">{{ tva_20 }}</td>
+                </tr>
+                <tr>
+                    <td colspan="4">TOTAL TTC</td>
+                    <td id="total_ttc">{{ total_ttc }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary">Générer Facture</button>
+    </form>
+</div>
+
+<script>
+    // JavaScript to calculate total HT, TVA 20%, and total TTC on the client-side
+    document.addEventListener("DOMContentLoaded", function() {
+        const unitPriceInputs = document.querySelectorAll("input[name='unit_price[]']");
+        const quantityCells = document.querySelectorAll("td:nth-child(3)");
+        const ptHTCells = document.querySelectorAll("td:nth-child(5)");
+        const totalHTCell = document.getElementById("total_ht");
+        const tva20Cell = document.getElementById("tva_20");
+        const totalTTCCell = document.getElementById("total_ttc");
+
+        function calculateTotals() {
+            let totalHT = 0;
+
+            unitPriceInputs.forEach((input, index) => {
+                const quantity = parseFloat(quantityCells[index].innerText) || 0;
+                const unitPrice = parseFloat(input.value) || 0;
+                const ptHT = unitPrice * quantity;
+                ptHTCells[index].innerText = ptHT.toFixed(2);
+                totalHT += ptHT;
+            });
+
+            const tva20 = totalHT * 0.2;
+            const totalTTC = totalHT + tva20;
+
+            totalHTCell.innerText = totalHT.toFixed(2);
+            tva20Cell.innerText = tva20.toFixed(2);
+            totalTTCCell.innerText = totalTTC.toFixed(2);
+        }
+
+        unitPriceInputs.forEach(input => {
+            input.addEventListener("input", calculateTotals);
+        });
+
+        calculateTotals(); // Initial calculation
+    });
+</script>
+{% endblock %}
