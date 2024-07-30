@@ -11,7 +11,13 @@ class Commande(models.Model):
     fax = models.CharField(max_length=50, blank=True, null=True)
     ice = models.CharField(max_length=50, blank=True, null=True)
     infographiste = models.CharField(max_length=100, blank=True, null=True)
-    order_status = models.CharField(max_length=50, default='draft')
+    order_status = models.CharField(max_length=50, choices=[ ('draft', 'Draft'), 
+        ('completed', 'Completed'), 
+        ('devis', 'Devis'), 
+        ('facture', 'Facture'), 
+        ('bon_livraison', 'Bon de Livraison'), 
+        ('situation_client', 'Situation Client')
+    ])
     designations_data = models.JSONField(default=list)  # Renamed field
     options_data = models.JSONField(default=dict)  # Renamed field
     def __str__(self):

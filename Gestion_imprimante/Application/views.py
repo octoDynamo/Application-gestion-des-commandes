@@ -117,7 +117,6 @@ def generer_devis(request, pk):
         for unit_price, quantity in zip(unit_prices, quantities):
             try:
                 unit_price = float(unit_price)
-                quantity = int(quantity)
                 total_prices.append(unit_price * quantity)
             except ValueError:
                 total_prices.append(0)  # Default to 0 if parsing fails
@@ -208,7 +207,9 @@ def designation_commande(request, pk):
 def generer_facture(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
-        html_string = render_to_string('Application/facture_template.html', {'commande': commande})
+        html_string = render_to_string('Application/facture_template.html', {
+            'commande': commande
+        })
         html = HTML(string=html_string)
         pdf = html.write_pdf()
 
@@ -222,7 +223,10 @@ def generer_facture(request, pk):
         if os.name == 'nt':
             os.startfile(pdf_path)
 
-        return redirect('liste_commandes')
+        commande.order_status = 'facture'
+        commande.save()
+
+        return redirect('liste_factures')
 
     return render(request, 'Application/generer_facture.html', {'commande': commande})
 
@@ -231,7 +235,9 @@ def generer_facture(request, pk):
 def generer_bon_livraison(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
-        html_string = render_to_string('Application/bon_livraison_template.html', {'commande': commande})
+        html_string = render_to_string('Application/bon_livraison_template.html', {
+            'commande': commande
+        })
         html = HTML(string=html_string)
         pdf = html.write_pdf()
 
@@ -245,9 +251,13 @@ def generer_bon_livraison(request, pk):
         if os.name == 'nt':
             os.startfile(pdf_path)
 
-        return redirect('liste_commandes')
+        commande.order_status = 'bon_livraison'
+        commande.save()
+
+        return redirect('liste_bon_livraison')
 
     return render(request, 'Application/generer_bon_livraison.html', {'commande': commande})
+
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
