@@ -108,31 +108,31 @@ def generer_devis(request, pk):
 
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
-        designations = request.POST.getlist('designation[]')
-        options = request.POST.getlist('option[]')
-        formats = request.POST.getlist('format[]')
-        paper_types = request.POST.getlist('paper_type[]')
         unit_prices = request.POST.getlist('unit_price[]')
         total_prices = []
 
-        # Calculate total prices
-        for unit_price, quantity in zip(unit_prices, quantities):
-            try:
-                unit_price = float(unit_price)
-                total_prices.append(unit_price * quantity)
-            except ValueError:
-                total_prices.append(0)  # Default to 0 if parsing fails
+        for idx, option in enumerate(Option.objects.filter(designation__commande=commande)):
+            unit_price = Decimal(unit_prices[idx])
+            option.unit_price = unit_price
+            option.total_ht = unit_price * option.quantity
+            option.tva_20 = option.total_ht * Decimal('0.2')
+            option.total_ttc = option.total_ht + option.tva_20
+            option.save()
+            total_prices.append(option.total_ht)
+
+        total_ht = sum(total_prices)
+        tva_20 = total_ht * Decimal('0.2')
+        total_ttc = total_ht + tva_20
 
         # Generate the PDF using WeasyPrint
         html_string = render_to_string('Application/devis_template.html', {
             'commande': commande,
             'quantities': quantities,
-            'designations': designations,
-            'options': options,
-            'formats': formats,
-            'paper_types': paper_types,
             'unit_prices': unit_prices,
-            'total_prices': total_prices
+            'total_prices': total_prices,
+            'total_ht': total_ht,
+            'tva_20': tva_20,
+            'total_ttc': total_ttc
         })
         html = HTML(string=html_string)
         pdf = html.write_pdf()
@@ -149,9 +149,18 @@ def generer_devis(request, pk):
         if os.name == 'nt':
             os.startfile(pdf_path)
 
-        return redirect('liste_commandes')
+        return redirect('liste_devis')
 
-    return render(request, 'Application/generer_devis.html', {'commande': commande})
+    total_ht = sum(option.unit_price * option.quantity if option.unit_price else Decimal('0.00') for designation in commande.designations.all() for option in designation.options.all())
+    tva_20 = total_ht * Decimal('0.20')
+    total_ttc = total_ht + tva_20
+
+    return render(request, 'Application/generer_devis.html', {
+        'commande': commande,
+        'total_ht': total_ht,
+        'tva_20': tva_20,
+        'total_ttc': total_ttc
+    })
 
 def logout_view(request):
     logout(request)
