@@ -16,7 +16,7 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
             font-size: 16px;
             line-height: 24px;
-            color: #555555d4;
+            color: #555;
         }
         table {
             width: 100%;
@@ -79,9 +79,9 @@
                         {% if option.format %} * {{ option.format }}{% endif %}
                         {% if option.paper_type %} * {{ option.paper_type }}{% endif %}
                     </td>
-                    <td> {{ option.quantity|default_zero }} </td>
-                    <td>{{ option.unit_price|default_zero|floatformat:2 }}</td>
-                    <td>{{ option.unit_price|default_zero|multiply:option.quantity|default_zero|floatformat:2 }}</td>
+                    <td>{{ option.quantity|default:0 }}</td>
+                    <td>{{ option.unit_price|default:0|floatformat:2 }}</td>
+                    <td>{{ option.unit_price|default:0|multiply:option.quantity|default:0|floatformat:2 }}</td>
                 </tr>
                 {% endfor %}
                 {% endfor %}

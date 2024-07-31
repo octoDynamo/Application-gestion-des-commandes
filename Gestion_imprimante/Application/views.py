@@ -10,6 +10,8 @@ from .forms import CommandeForm
 from django.db.models import Q
 from django.contrib import messages
 from weasyprint import HTML
+from decimal import Decimal
+
 
 def login_view(request):
     if request.method == 'POST':
@@ -212,23 +214,20 @@ def generer_facture(request, pk):
         unit_prices = request.POST.getlist('unit_price[]')
         total_prices = []
 
-        for designation in commande.designations.all():
-            for option in designation.options.all():
-                idx = list(commande.designations.all()).index(designation)
-                unit_price = request.POST.getlist('unit_price[]')[idx]
-                option.unit_price = unit_price
-                option.save()
-
-        for quantity, unit_price in zip(quantities, unit_prices):
-            if unit_price and quantity:
-                total_prices.append(float(unit_price) * int(quantity))
-            else:
-                total_prices.append(0)
+        for idx, option in enumerate(Option.objects.filter(designation__commande=commande)):
+            unit_price = Decimal(unit_prices[idx])
+            option.unit_price = unit_price
+            option.total_ht = unit_price * option.quantity
+            option.tva_20 = option.total_ht * Decimal('0.2')
+            option.total_ttc = option.total_ht + option.tva_20
+            option.save()
+            total_prices.append(option.total_ht)
 
 
         total_ht = sum(total_prices)
-        tva_20 = total_ht * 0.2
+        tva_20 = total_ht * Decimal('0.20')
         total_ttc = total_ht + tva_20
+
 
         # Generate the PDF using WeasyPrint
         html_string = render_to_string('Application/facture_template.html', {
@@ -255,9 +254,10 @@ def generer_facture(request, pk):
 
         return redirect('liste_factures')
 
-    total_ht = sum(option.unit_price * option.quantity if option.unit_price else 0 for designation in commande.designations.all() for option in designation.options.all())
-    tva_20 = total_ht * 0.2
+    total_ht = sum(option.unit_price * option.quantity if option.unit_price else Decimal('0.00') for designation in commande.designations.all() for option in designation.options.all())
+    tva_20 = total_ht * Decimal('0.20')
     total_ttc = total_ht + tva_20
+
 
     return render(request, 'Application/generer_facture.html', {
         'commande': commande,

@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+
 class Commande(models.Model):
     order_id = models.AutoField(primary_key=True)  # Auto-incremented primary key
     date_time = models.DateTimeField(auto_now_add=True)
@@ -11,8 +12,7 @@ class Commande(models.Model):
     fax = models.CharField(max_length=50, blank=True, null=True)
     ice = models.CharField(max_length=50, blank=True, null=True)
     infographiste = models.CharField(max_length=100, blank=True, null=True)
-    order_status = models.CharField(max_length=50, choices=[
-        ('draft', 'Draft'), 
+    order_status = models.CharField(max_length=50, choices=[ ('draft', 'Draft'), 
         ('completed', 'Completed'), 
         ('devis', 'Devis'), 
         ('facture', 'Facture'), 
@@ -39,6 +39,9 @@ class Option(models.Model):
     quantity = models.PositiveIntegerField()
     paper_type = models.CharField(max_length=255)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    total_ht = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    tva_20 = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_ttc = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
         return self.option_name
