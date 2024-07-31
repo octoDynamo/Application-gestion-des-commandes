@@ -1,13 +1,13 @@
 {% extends "base_no_nav.html" %}
 {% load static %}
 
-
 {% block content %}
-<div class="container-fluid p-5 bg-light text-dark">
+
+<div class="container-fluid p-5 bg-light text-dark" style="background-color: #f5f5f5;">
     <div class="row align-items-center">
         <div class="col-md-8">
-            <h1 class="display-4 animate__animated animate__fadeInLeft">Bienvenue, Monsieur</h1>
-            <p class="lead animate__animated animate__fadeInLeft animate__delay-1s">Ready to start your day with some tasks?</p>
+            <h1 class="display-4 animate__animated animate__fadeInLeft" style="font-family: 'Roboto', sans-serif;">Bienvenue, Monsieur</h1>
+            <p class="lead animate__animated animate__fadeInLeft animate__delay-1s" style="font-family: 'Roboto', sans-serif;">Ready to start your day</p>
         </div>
         <div class="col-md-4 text-center">
             <img src="{% static 'Application/images/director-icon.png' %}" alt="Director Icon" class="img-fluid animate__animated animate__fadeInRight">
@@ -16,55 +16,55 @@
 </div>
 <div class="container mt-4">
     <div class="row justify-content-center mt-4">
-        <div class="col-md-4 mb-4">
-            <div class="card bg-primary text-white h-100">
+        <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
+            <div class="card text-white h-100" style="background-color: #3498db;">
                 <div class="card-body text-center">
                     <i class="fas fa-list fa-2x"></i>
-                    <h5 class="card-title mt-2">Commandes</h5>
+                    <h5 class="card-title mt-2" style="font-family: 'Roboto', sans-serif;">Commandes</h5>
                 </div>
                 <div class="card-footer">
                     <a href="{% url 'liste_commandes' %}" class="btn btn-light btn-block">GO</a>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-4">
-            <div class="card bg-info text-white h-100">
+        <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
+            <div class="card text-white h-100" style="background-color: #1abc9c;">
                 <div class="card-body text-center">
                     <i class="fas fa-file-alt fa-2x"></i>
-                    <h5 class="card-title mt-2">des Devis</h5>
+                    <h5 class="card-title mt-2" style="font-family: 'Roboto', sans-serif;">Devis</h5>
                 </div>
                 <div class="card-footer">
                     <a href="{% url 'liste_devis' %}" class="btn btn-light btn-block">GO</a>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-4">
-            <div class="card bg-success text-white h-100">
+        <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
+            <div class="card text-white h-100" style="background-color: #e74c3c;">
                 <div class="card-body text-center">
                     <i class="fas fa-file-invoice-dollar fa-2x"></i>
-                    <h5 class="card-title mt-2">Factures</h5>
+                    <h5 class="card-title mt-2" style="font-family: 'Roboto', sans-serif;">Factures</h5>
                 </div>
                 <div class="card-footer">
                     <a href="{% url 'liste_factures' %}" class="btn btn-light btn-block">GO</a>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-4">
-            <div class="card bg-warning text-white h-100">
+        <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
+            <div class="card text-white h-100" style="background-color: #f39c12;">
                 <div class="card-body text-center">
                     <i class="fas fa-truck fa-2x"></i>
-                    <h5 class="card-title mt-2">Bon de Livraison</h5>
+                    <h5 class="card-title mt-2" style="font-family: 'Roboto', sans-serif;">Bon de Livraison</h5>
                 </div>
                 <div class="card-footer">
                     <a href="{% url 'liste_bon_livraison' %}" class="btn btn-light btn-block">GO</a>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-4">
-            <div class="card bg-danger text-white h-100">
+        <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
+            <div class="card text-white h-100" style="background-color: #9b59b6;">
                 <div class="card-body text-center">
                     <i class="fas fa-users fa-2x"></i>
-                    <h5 class="card-title mt-2">Situation Client</h5>
+                    <h5 class="card-title mt-2" style="font-family: 'Roboto', sans-serif;">Situation Client</h5>
                 </div>
                 <div class="card-footer">
                     <a href="{% url 'situation_client' %}" class="btn btn-light btn-block">GO</a>
@@ -74,4 +74,3 @@
     </div>
 </div>
 {% endblock %}
-

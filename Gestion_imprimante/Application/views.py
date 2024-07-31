@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 from django.conf import settings
 from django.http import HttpResponse
@@ -135,6 +136,7 @@ def generer_devis(request, pk):
         # Generate the PDF using WeasyPrint
         html_string = render_to_string('Application/devis_template.html', {
             'commande': commande,
+            'date': datetime.now().strftime("%B %d, %Y"),
             'quantities': quantities,
             'unit_prices': unit_prices,
             'total_prices': total_prices,
