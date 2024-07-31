@@ -19,4 +19,6 @@ urlpatterns = [
     path('generer_bon_livraison/<int:pk>/', views.generer_bon_livraison, name='generer_bon_livraison'),
     path('logs/', views.log_view, name='log_view'),
     path('logs/clear/', views.clear_log, name='clear_log'),
+    path('welcome_director/', views.welcome_director, name='welcome_director'),
+
 ]

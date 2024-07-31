@@ -105,23 +105,6 @@
                     </form>
                 </div>
             </li>
-            {% if is_director %}
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'liste_commandes' %}"><i class="fas fa-list"></i> Liste des Commandes</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'liste_devis' %}"><i class="fas fa-file-invoice"></i> Liste des Devis</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'liste_factures' %}"><i class="fas fa-file-invoice-dollar"></i> Liste des Factures</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'liste_bon_livraison' %}"><i class="fas fa-truck"></i> Liste des Bons de Livraison</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'situation_client' %}"><i class="fas fa-user-check"></i> Situation Client</a>
-            </li>
-            {% endif %}
             {% if not is_director %}
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'ajouter_commande' %}"><i class="fas fa-plus"></i></a>

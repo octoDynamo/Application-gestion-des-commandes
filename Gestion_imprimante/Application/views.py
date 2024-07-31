@@ -20,6 +20,8 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
+            if user.groups.filter(name='Directeurs').exists():
+                return redirect('welcome_director')
             return redirect('dashboard')
         else:
             messages.error(request, 'Mot de passe ou username oublié')
@@ -32,6 +34,12 @@ def log_action(user, action, commande):
 @login_required
 def dashboard(request):
     return redirect('liste_commandes')
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def welcome_director(request):
+    return render(request, 'Application/welcome_director.html')
+
 
 @login_required
 def liste_commandes(request):
