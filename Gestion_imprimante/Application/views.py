@@ -15,7 +15,6 @@ from decimal import Decimal
 from django.templatetags.static import static
 
 
-
 def login_view(request):
     if request.method == 'POST':
         username = request.POST['username']
