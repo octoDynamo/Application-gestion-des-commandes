@@ -281,19 +281,11 @@ def generer_bon_livraison(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
-        designations = request.POST.getlist('designation[]')
-        options = request.POST.getlist('option[]')
-        formats = request.POST.getlist('format[]')
-        paper_types = request.POST.getlist('paper_type[]')
 
         # Generate the PDF using WeasyPrint
-        html_string = render_to_string('Application/bon_livrairson_template.html', {
+        html_string = render_to_string('Application/bon_livraison_template.html', {
             'commande': commande,
-            'quantities': quantities,
-            'designations': designations,
-            'options': options,
-            'formats': formats,
-            'paper_types': paper_types,
+            'quantities': quantities
         })
         html = HTML(string=html_string)
         pdf = html.write_pdf()
@@ -308,13 +300,11 @@ def generer_bon_livraison(request, pk):
         if os.name == 'nt':
             os.startfile(pdf_path)
 
-        commande.order_status = 'bon_livraison'
-        commande.save()
-
         return redirect('liste_bon_livraison')
 
-    return render(request, 'Application/generer_bon_livraison.html', {'commande': commande})
-
+    return render(request, 'Application/generer_bon_livraison.html', {
+        'commande': commande
+    })
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())

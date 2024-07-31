@@ -1,0 +1,37 @@
+{% extends "base_no_nav.html" %}
+
+{% block title %}Générer Bon de Livraison{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Générer Bon de Livraison</h2>
+    <form method="post">
+        {% csrf_token %}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Article</th>
+                    <th>Designations</th>
+                    <th>QTE</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for designation in commande.designations.all %}
+                {% for option in designation.options.all %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ designation.name }}<br>
+                        {% if option.option_name %} * {{ option.option_name }}{% endif %}
+                        {% if option.format %} * {{ option.format }}{% endif %}
+                        {% if option.paper_type %} * {{ option.paper_type }}{% endif %}
+                    </td>
+                    <td>{{ option.quantity }}</td>
+                </tr>
+                {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary">Générer Bon de Livraison</button>
+    </form>
+</div>
+{% endblock %}
