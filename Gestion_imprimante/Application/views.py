@@ -1,5 +1,7 @@
 from datetime import datetime
 import os
+import logging
+from django.shortcuts import render
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -85,11 +87,42 @@ def liste_bon_livraison(request):
     commandes = Commande.objects.all()
     return render(request, 'Application/liste_bon_livraison.html', {'commandes': commandes})
 
+logger = logging.getLogger(__name__)
+@login_required
+def situation_client(request):
+    query = request.GET.get('q')
+    commandes = []
+
+    if query:
+        # Debug: Print the raw query
+        print(f"Raw query: {query}")
+        
+        # Filter commandes based on the query
+        commandes = Commande.objects.filter(company_reference_number__icontains=query)
+        
+        # Debug: Print the queryset
+        print(f"Filtered commandes: {commandes}")
+    else:
+        # Debug: Indicate no query was provided
+        print("No query provided.")
+    
+    # Debug: Print if commandes is empty or not
+    if not commandes:
+        print("No commandes found.")
+
+    return render(request, 'Application/situation_client.html', {'commandes': commandes, 'query': query})
+
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
-def situation_client(request):
-    commandes = Commande.objects.all()
-    return render(request, 'Application/situation_client.html', {'commandes': commandes})
+def update_remarque(request, pk):
+    facture = get_object_or_404(Commande, pk=pk)
+    if request.method == 'POST':
+        remarque = request.POST.get('remarque')
+        facture.remarque = remarque
+        if remarque == 'paye':
+            facture.facture_status = 'facture_termine'
+        facture.save()
+    return redirect('liste_factures')
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Assistants').exists())
@@ -407,3 +440,4 @@ def clear_log(request):
     if request.method == 'POST':
         CommandeLog.objects.all().delete()
     return redirect('log_view')
+

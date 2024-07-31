@@ -1,0 +1,58 @@
+body {
+    background-image: url("Application/images/hajar familia_Plan de travail 1.png");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-color: rgba(255, 255, 255, 0);
+}
+
+.navbar {
+    margin-bottom: 20px;
+    background: rgba(255, 255, 255, 0);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        box-shadow: 0 0 10px #ffd700;
+    }
+    to {
+        box-shadow: 0 0 20px #ffa500, 0 0 30px #ff8c00;
+    }
+}
+
+.navbar-nav .nav-item .nav-link {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+.navbar-nav .nav-item .nav-link:hover {
+    color: #007bff;
+    text-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.container {
+    background: rgba(255, 255, 255, 0);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.search-bar {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 70px;
+    z-index: 1000;
+}
+
+.search-bar input {
+    width: 200px;
+}
+
+.glow-button {
+    animation: glow 1.5s ease-in-out infinite alternate;
+}
