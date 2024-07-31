@@ -12,6 +12,8 @@ from django.db.models import Q
 from django.contrib import messages
 from weasyprint import HTML
 from decimal import Decimal
+from django.templatetags.static import static
+
 
 
 def login_view(request):
@@ -114,6 +116,8 @@ def modifier_commande(request, pk):
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def generer_devis(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
+    date = datetime.now().strftime('%B %d, %Y')
+
 
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
@@ -136,13 +140,15 @@ def generer_devis(request, pk):
         # Generate the PDF using WeasyPrint
         html_string = render_to_string('Application/devis_template.html', {
             'commande': commande,
-            'date': datetime.now().strftime("%B %d, %Y"),
+            'date': date,
             'quantities': quantities,
             'unit_prices': unit_prices,
             'total_prices': total_prices,
             'total_ht': total_ht,
             'tva_20': tva_20,
-            'total_ttc': total_ttc
+            'total_ttc': total_ttc,
+            'image_url': request.build_absolute_uri(static('Application/images/devis.jpg'))
+
         })
         html = HTML(string=html_string)
         pdf = html.write_pdf()

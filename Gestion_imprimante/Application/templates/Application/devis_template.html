@@ -1,4 +1,5 @@
 {% load custom_filters %}
+{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -6,11 +7,19 @@
     <meta charset="UTF-8">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family:system-ui;
+            margin: 0;
+            padding: 0;
+            background: url("{ image_url }") no-repeat center center;
+            background-size: cover;
+        }
+        h2 {
+            margin: 0;
+            padding: 0;
         }
         .container {
             margin: 0 auto;
-            padding: 20px;
+            padding: 150px 40px 200px;;
             max-width: 800px;
         }
         .header {
@@ -18,8 +27,16 @@
             justify-content: space-between;
             align-items: center;
         }
-        .header .date {
+        .header-left {
+            width: 70%;
+        }
+        .header-right {
+            width: 30%;
             text-align: right;
+        }
+        .separator {
+            margin: 10px 0;
+            border-bottom: 2px solid black;
         }
         h1 {
             text-align: center;
@@ -43,6 +60,9 @@
             padding: 8px;
             text-align: left;
         }
+        th {
+            background-color: #f2f2f200;
+        }
         .total {
             font-weight: bold;
         }
@@ -54,14 +74,14 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="date">
+            <div class="header-left">
                 <p>DEVIS N° {{ commande.order_id }}/YEAR</p>
-            </div><br>
-            <div>
+            </div>
+            <div class="header-right">
                 <p>Rabat, le {{ date }}</p>
             </div>
         </div>
-        
+        <div class="separator"></div>
         <div class="info">
             <p><strong>Nom_Client :</strong> {{ commande.client_name }}</p>
             <p><strong>ICE :</strong> {{ commande.ice }}</p>
