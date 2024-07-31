@@ -105,7 +105,7 @@
                     </form>
                 </div>
             </li>
-            {% if is_assistant %}
+            {% if not is_director %}
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'ajouter_commande' %}"><i class="fas fa-plus"></i></a>
             </li>

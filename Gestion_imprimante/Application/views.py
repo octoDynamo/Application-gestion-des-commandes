@@ -67,8 +67,17 @@ def liste_devis(request):
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def liste_factures(request):
-    commandes = Commande.objects.all()
-    return render(request, 'Application/liste_factures.html', {'commandes': commandes})
+    query = request.GET.get('q')
+    if query:
+        factures = Commande.objects.filter(
+            Q(order_id__icontains=query) |
+            Q(company_reference_number__icontains=query) |
+            Q(client_name__icontains=query) |
+            Q(facture_status__icontains=query)
+        )
+    else:
+        factures = Commande.objects.filter(order_status='completed').order_by('-date_time')
+    return render(request, 'Application/liste_factures.html', {'factures': factures})
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
@@ -232,11 +241,26 @@ def designation_commande(request, pk):
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def generer_facture(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
+    date = datetime.now().strftime('%B %d, %Y')
+
     
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
         unit_prices = request.POST.getlist('unit_price[]')
         total_prices = []
+        bc_number = request.POST.get('bc_number')
+        date_bc = request.POST.get('date_bc')
+
+
+         # Automatically assign a facture number if not already assigned
+        if not commande.facture_numero:
+            last_facture = Commande.objects.exclude(facture_numero=None).order_by('-facture_numero').first()
+            if last_facture:
+                commande.facture_numero = last_facture.facture_numero + 1
+            else:
+                commande.facture_numero = 1
+
+
 
         for idx, option in enumerate(Option.objects.filter(designation__commande=commande)):
             unit_price = Decimal(unit_prices[idx])
@@ -251,25 +275,36 @@ def generer_facture(request, pk):
         total_ht = sum(total_prices)
         tva_20 = total_ht * Decimal('0.20')
         total_ttc = total_ht + tva_20
+        
 
+        # Save these values to the Commande model
+        commande.bc_number = bc_number
+        commande.date_bc = date_bc
+        commande.facture_status = 'facture_termine'  # Mark facture as complete
+        commande.save()
 
         # Generate the PDF using WeasyPrint
         html_string = render_to_string('Application/facture_template.html', {
             'commande': commande,
+            'date': date,
+            'bc_number': bc_number,
+            'date_bc': date_bc,
             'quantities': quantities,
             'unit_prices': unit_prices,
             'total_prices': total_prices,
             'total_ht': total_ht,
             'tva_20': tva_20,
-            'total_ttc': total_ttc
+            'total_ttc': total_ttc,
+            'image_url': request.build_absolute_uri(static('Application/images/devis.jpg'))
+
         })
         html = HTML(string=html_string)
         pdf = html.write_pdf()
 
         response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="facture_{commande.order_id}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="facture_{commande.facture_numero}.pdf"'
 
-        pdf_path = os.path.join(settings.MEDIA_ROOT, f"facture_{commande.order_id}.pdf")
+        pdf_path = os.path.join(settings.MEDIA_ROOT, f"facture_{commande.facture_numero}.pdf")
         with open(pdf_path, 'wb') as f:
             f.write(pdf)
 
@@ -289,6 +324,21 @@ def generer_facture(request, pk):
         'tva_20': tva_20,
         'total_ttc': total_ttc
     })
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def update_facture_status(request, pk):
+    facture = get_object_or_404(Commande, pk=pk)
+    if request.method == 'POST':
+        remarque = request.POST.get('remarque')
+        facture.remarque = remarque
+        if remarque == 'paye':
+            facture.facture_status = 'facture_termine'
+        else:
+            facture.remarque = 'non_paye'
+        facture.save()
+    return redirect('liste_factures')
+
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())

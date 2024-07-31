@@ -3,33 +3,45 @@
 {% block title %}Liste des Factures{% endblock %}
 
 {% block content %}
-<h1 class="text-center my-4">Liste des Factures</h1>
-<div class="table-responsive">
-    <table class="table table-striped table-bordered">
+<div class="container mt-4">
+    <h1>Liste des Factures</h1>
+    <table class="table table-striped" id="factureTable">
         <thead>
             <tr>
-                <th>Numéro de Dossier</th>
-                <th>Référence Client</th>
-                <th>Nom du Client</th>
-                <th>Date et Heure</th>
-                <th>Statut</th>
-                <th>Actions</th>
+            <th>Num_Dossier</th>
+            <th>Facture N°</th>
+            <th>Client</th>
+            <th>Client_Ref</th>
+            <th>Status</th>
+            <th>Remarque</th>
+            <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            {% for commande in commandes %}
-            <tr>
-                <td>{{ commande.order_id }}</td>
-                <td>{{ commande.company_reference_number }}</td>
-                <td>{{ commande.client_name }}</td>
-                <td>{{ commande.date_time }}</td>
-                <td>{{ commande.order_status }}</td>
-                <td>
-                    <a href="{% url 'generer_facture' commande.pk %}" class="btn btn-sm btn-secondary"><i class="fas fa-file-invoice"></i></a>
-                </td>
+            {% for facture in factures %}
+                <tr>
+                    <td>{{ facture.order_id }}</td>
+                    <td>{{ facture.facture_numero }}</td>
+                    <td>{{ facture.client_name }}</td>
+                    <td>{{ facture.company_reference_number }}</td>
+                    <td>{{ facture.facture_status }}</td>
+                    <td>
+                        {% if facture.remarque == 'paye' %}
+                            Payé
+                        {% else %}
+                            <form method="post" action="{% url 'update_facture_status' facture.pk %}">
+                            {% csrf_token %}
+                            <input type="checkbox" name="remarque" value="paye" onchange="this.form.submit()">
+                        </form>
+                        {% endif %}
+                    </td>
+                    <td>
+                    <a href="{% url 'generer_facture' facture.pk %}" class="btn btn-sm btn-secondary"><i class="fas fa-file-invoice"></i></a>
+                    </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 {% endblock %}
+

@@ -19,8 +19,18 @@ class Commande(models.Model):
         ('bon_livraison', 'Bon de Livraison'), 
         ('situation_client', 'Situation Client')
     ])
-    designations_data = models.JSONField(default=list)  # Renamed field
-    options_data = models.JSONField(default=dict)  # Renamed field
+    bc_number = models.CharField(max_length=50, blank=True, null=True)  # New field for BC number
+    date_bc = models.DateField(blank=True, null=True) 
+    facture_numero = models.PositiveIntegerField(unique=True, null=True, blank=True)
+    facture_status = models.CharField(max_length=50, choices=[
+        ('no_facture', 'Pas de Facture'),
+        ('facture_termine', 'Facture Terminée')
+    ], default='pas de facture')
+    remarque = models.CharField(max_length=50, choices=[
+        ('paye', 'Payé'),
+        ('non_paye', 'Non Payé')
+    ], default='non payé')
+
 
     def __str__(self):
         return f"Commande {self.order_id}: {self.client_name}"

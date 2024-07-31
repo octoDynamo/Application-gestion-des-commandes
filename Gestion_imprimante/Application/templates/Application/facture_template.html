@@ -1,67 +1,97 @@
 {% load custom_filters %}
+{% load static %}
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Facture {{ commande.order_id }}</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family:system-ui;
+            margin: 0;
+            padding: 0;
+            background: url("{{ image_url }}") no-repeat center center;
+            background-size: cover;
         }
-        .invoice-box {
-            width: 100%;
-            padding: 30px;
-            border: 1px solid #eee;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-            font-size: 16px;
-            line-height: 24px;
-            color: #555;
+        h2 {
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            margin: 0 auto;
+            padding: 300px 40px 200px;;
+            max-width: 800px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-left {
+            width: 70%;
+        }
+        .header-right {
+            width: 30%;
+            text-align: right;
+        }
+        .separator {
+            margin: 10px 0;
+            border-bottom: 2px solid black;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .info {
+            margin-bottom: 20px;
+        }
+        .info .client-info {
+            margin-top: 20px;
         }
         table {
             width: 100%;
-            line-height: inherit;
-            text-align: left;
             border-collapse: collapse;
+            margin-bottom: 20px;
         }
         table, th, td {
             border: 1px solid black;
         }
         th, td {
-            padding: 5px;
+            padding: 8px;
             text-align: left;
         }
-        .invoice-box table tr.heading th {
-            background: #eee;
-            border-bottom: 1px solid #ddd;
-            font-weight: bold;
+        th {
+            background-color: #f2f2f200;
         }
         .total {
             font-weight: bold;
         }
+        .right-align {
+            text-align: right;
+        }
     </style>
 </head>
 <body>
-    <div class="invoice-box">
-        <h2>Facture</h2>
-        <table>
-            <tr>
-                <th>Numéro de Dossier</th>
-                <td>{{ commande.order_id }}</td>
-            </tr>
-            <tr>
-                <th>Date</th>
-                <td>{{ commande.date_time }}</td>
-            </tr>
-            <tr>
-                <th>Nom du Client</th>
-                <td>{{ commande.client_name }}</td>
-            </tr>
-        </table>
-        <br>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <p>Facture N° {{ commande.order_id }}/YEAR</p>
+            </div>
+            <div class="header-right">
+                <p>Rabat, le {{ date }}</p>
+            </div>
+        </div>
+        <div class="separator"></div>
+        <div class="info">
+            <p><strong>Nom_Client :</strong> {{ commande.client_name }}</p>
+            <p><strong>ICE :</strong> {{ commande.ice }}</p>
+            <p><strong>BC N° :</strong> {{ bc_number }}</p>
+            <p><strong>Date BC :</strong> {{ date_bc }}</p>
+        </div>
+
         <table>
             <thead>
-                <tr class="heading">
+                <tr>
                     <th>Article</th>
                     <th>Designations</th>
                     <th>QTE</th>
@@ -73,15 +103,16 @@
                 {% for designation in commande.designations.all %}
                 {% for option in designation.options.all %}
                 <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ designation.name }}<br>
+                    <td>{{ forloop.parentloop.counter }}</td>
+                    <td>
+                        {{ designation.name }}<br>
                         {% if option.option_name %} * {{ option.option_name }}{% endif %}
                         {% if option.format %} * {{ option.format }}{% endif %}
                         {% if option.paper_type %} * {{ option.paper_type }}{% endif %}
                     </td>
-                    <td>{{ option.quantity|default:0 }}</td>
-                    <td>{{ option.unit_price|default:0|floatformat:2 }}</td>
-                    <td>{{ option.unit_price|default:0|multiply:option.quantity|default:0|floatformat:2 }}</td>
+                    <td class="right-align"> {{ option.quantity|default_zero }} </td>
+                    <td class="right-align">{{ option.unit_price|default_zero|floatformat:2 }}</td>
+                    <td class="right-align">{{ option.unit_price|default_zero|multiply:option.quantity|default_zero|floatformat:2 }}</td>
                 </tr>
                 {% endfor %}
                 {% endfor %}

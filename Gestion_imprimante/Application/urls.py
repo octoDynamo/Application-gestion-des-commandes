@@ -16,9 +16,11 @@ urlpatterns = [
     path('designation/<int:pk>/', views.designation_commande, name='designation_commande'),
     path('generer_devis/<int:pk>/', views.generer_devis, name='generer_devis'),
     path('generer_facture/<int:pk>/', views.generer_facture, name='generer_facture'),
+    path('update_facture_status/<int:pk>/', views.update_facture_status, name='update_facture_status'),
     path('generer_bon_livraison/<int:pk>/', views.generer_bon_livraison, name='generer_bon_livraison'),
     path('logs/', views.log_view, name='log_view'),
     path('logs/clear/', views.clear_log, name='clear_log'),
     path('welcome_director/', views.welcome_director, name='welcome_director'),
+    path('update_facture_status/<int:pk>/', views.update_facture_status, name='update_facture_status'),
 
 ]
