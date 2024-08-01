@@ -37,52 +37,33 @@
         <p>Date: {{ commande.date_time }}</p>
         <p>Nom du client: {{ commande.company_reference_number }}</p>
 
-        {% for designation in commande.designations.all %}
-        <h2>Désignation: {{ designation.name }}</h2>
         <table>
             <thead>
                 <tr>
-                    <th>Option</th>
-                    <th>Format</th>
-                    <th>Quantité</th>
-                    <th>Type de Papier</th>
-                    <th>Grammage</th>
-                    <th>Recto/Verso</th>
+                    <th>Article</th>
+                    <th>Désignations</th>
+                    <th>Quantité (QTE)</th>
                 </tr>
             </thead>
             <tbody>
-                {% for option in designation.options.all %}
-                <tr>
-                    <td>{{ option.option_name }}</td>
-                    <td>{{ option.format }}</td>
-                    <td>{{ option.quantity }}</td>
-                    <td>{{ option.paper_type }}</td>
-                    <td>{{ option.grammage }}</td>
-                    <td>{{ option.recto_verso }}</td>
-                </tr>
+                {% for designation in commande.designations.all %}
+                    {% for option in designation.options.all %}
+                    <tr>
+                        <td>{{ forloop.parentloop.counter }}</td>
+                        <td>
+                            <strong>{{ designation.name }}</strong><br>
+                            * {{ option.option_name }}
+                            {% if option.format %}* Format: {{ option.format }}{% endif %}
+                            {% if option.recto_verso %}* Recto/Verso: {{ option.recto_verso }}{% endif %}
+                            {% if option.grammage %}* Grammage: {{ option.grammage }}{% endif %}
+                            {% if option.paper_type %}* Type de Papier: {{ option.paper_type }}{% endif %}
+                        </td>
+                        <td>{{ option.quantity }}</td>
+                    </tr>
+                    {% endfor %}
                 {% endfor %}
             </tbody>
         </table>
-        <h3>Options de Finition</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Finition</th>
-                    <th>Quantité</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for option in designation.options.all %}
-                {% if option.option_name in "Spiral,Piquage,Collage,Cousu,Pelliculage Mat R,Pelliculage Mat RV,Pelliculage Brillant R,Pelliculage Brillant RV" %}
-                <tr>
-                    <td>{{ option.option_name }}</td>
-                    <td>{{ option.quantity }}</td>
-                </tr>
-                {% endif %}
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endfor %}
     </div>
 </body>
 </html>

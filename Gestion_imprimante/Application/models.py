@@ -21,6 +21,7 @@ class Commande(models.Model):
     ])
     bc_number = models.CharField(max_length=50, blank=True, null=True)  # New field for BC number
     date_bc = models.DateField(blank=True, null=True) 
+    devis_numero = models.PositiveIntegerField(unique=True, null=True, blank=True)
     facture_numero = models.PositiveIntegerField(unique=True, null=True, blank=True)
     facture_status = models.CharField(max_length=50, choices=[
         ('no_facture', 'Pas de Facture'),
@@ -30,6 +31,10 @@ class Commande(models.Model):
         ('paye', 'Payé'),
         ('non_paye', 'Non Payé')
     ], default='non payé')
+    devis_status = models.CharField(max_length=50, choices=[
+        ('no_devis', 'Pas de Devis'),
+        ('devis_termine', 'Devis Terminé')
+    ], default='pas de devis')
     designations_data = models.JSONField(default=list)  # Renamed field
     options_data = models.JSONField(default=dict)
 
@@ -55,7 +60,7 @@ class Option(models.Model):
     total_ttc = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     grammage = models.CharField(max_length=255, blank=True, null=True)  # Ajouter ce champ
     recto_verso = models.CharField(max_length=2, choices=[('R', 'R'), ('RV', 'R/V')], blank=True, null=True)  # Ajouter ce champ
-    
+
     def __str__(self):
         return self.option_name
 
