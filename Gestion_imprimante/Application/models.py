@@ -30,7 +30,8 @@ class Commande(models.Model):
         ('paye', 'Payé'),
         ('non_paye', 'Non Payé')
     ], default='non payé')
-
+    designations_data = models.JSONField(default=list)  # Renamed field
+    options_data = models.JSONField(default=dict)
 
     def __str__(self):
         return f"Commande {self.order_id}: {self.client_name}"
@@ -52,7 +53,9 @@ class Option(models.Model):
     total_ht = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     tva_20 = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_ttc = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
+    grammage = models.CharField(max_length=255, blank=True, null=True)  # Ajouter ce champ
+    recto_verso = models.CharField(max_length=2, choices=[('R', 'R'), ('RV', 'R/V')], blank=True, null=True)  # Ajouter ce champ
+    
     def __str__(self):
         return self.option_name
 

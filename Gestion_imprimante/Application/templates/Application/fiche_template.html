@@ -46,6 +46,8 @@
                     <th>Format</th>
                     <th>Quantité</th>
                     <th>Type de Papier</th>
+                    <th>Grammage</th>
+                    <th>Recto/Verso</th>
                 </tr>
             </thead>
             <tbody>
@@ -55,7 +57,28 @@
                     <td>{{ option.format }}</td>
                     <td>{{ option.quantity }}</td>
                     <td>{{ option.paper_type }}</td>
+                    <td>{{ option.grammage }}</td>
+                    <td>{{ option.recto_verso }}</td>
                 </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h3>Options de Finition</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Finition</th>
+                    <th>Quantité</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for option in designation.options.all %}
+                {% if option.option_name in "Spiral,Piquage,Collage,Cousu,Pelliculage Mat R,Pelliculage Mat RV,Pelliculage Brillant R,Pelliculage Brillant RV" %}
+                <tr>
+                    <td>{{ option.option_name }}</td>
+                    <td>{{ option.quantity }}</td>
+                </tr>
+                {% endif %}
                 {% endfor %}
             </tbody>
         </table>

@@ -22,5 +22,5 @@ urlpatterns = [
     path('logs/clear/', views.clear_log, name='clear_log'),
     path('welcome_director/', views.welcome_director, name='welcome_director'),
     path('update_facture_status/<int:pk>/', views.update_facture_status, name='update_facture_status'),
-    path('update_remarque/<int:pk>/', views.update_remarque, name='update_remarque'),
+    path('supprimer_facture/<int:pk>/', views.supprimer_facture, name='supprimer_facture'),
 ]

@@ -3,6 +3,7 @@
 {% block title %}Liste des Commandes{% endblock %}
 
 {% block content %}
+{% if commandes %}
 <h1 class="text-center my-4">Liste des Commandes</h1>
 <div class="d-flex justify-content-center">
     <div class="table-responsive">
@@ -33,6 +34,11 @@
             {% endfor %}
         </tbody>
     </table>
+    {% else %}
+    <div class="alert alert-warning" role="alert">
+        Aucun résultat trouvé pour "{{ query }}".
+    </div>
+{% endif %}
 </div>
 </div>
 {% endblock %}

@@ -4,10 +4,11 @@
     {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Application{% endblock %}</title>
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
         html, body {
             font-family: Arial, sans-serif;
@@ -36,8 +37,8 @@
                 box-shadow: 0 0 20px #4a4947, 0 0 30px #252422;
             }
         }
-        .navbar-nav .nav-item .nav-link {
-            font-size: 18px;
+        .navbar-nav .nav-item .nav-link .fas {
+            font-size: 1.2em;
             font-weight: bold;
             color: #333;
         }
@@ -66,13 +67,24 @@
             top: 50px;
             right: 70px;
             z-index: 1000;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        .search-bar.active {
+            display: block;
         }
         .search-bar input {
             width: 200px;
             display: inline-block;
         }
-        .search-bar .clear-search {
-            display: inline-block;
+        .clear-search {
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 1.5em;
+            line-height: 1;
+            padding: 0;
+            cursor: pointer;
         }
         .glow-button {
             animation: glow 1.5s ease-in-out infinite alternate;
@@ -98,7 +110,7 @@
             <li class="nav-item">
                 <a class="nav-link" href="#" id="search-toggle"><i class="fas fa-search"></i></a>
                 <div class="search-bar">
-                    <form method="GET" action="{% url 'liste_commandes' %}">
+                    <form method="GET" id="searchForm">
                         <input type="text" name="q" class="form-control" placeholder="Rechercher...">
                         <button type="submit" class="btn btn-outline-secondary"><i class="fas fa-search"></i></button>
                         <button type="button" class="btn btn-outline-secondary clear-search">&times;</button>
@@ -116,38 +128,42 @@
         </ul>
     </div>
 </nav>
-<div class="content-wrapper">
-    <div class="container">
-        {% block content %}
-        {% endblock %}
-    </div>
+<div class="container mt-4">
+    {% block content %}{% endblock %}
 </div>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('#search-toggle').click(function() {
-            $('.search-bar').toggle();
-            return false;
-        });
+     document.addEventListener('DOMContentLoaded', function () {
+            var currentPath = window.location.pathname;
+            var searchForm = document.getElementById('searchForm');
+            var searchInput = searchForm.querySelector('input[name="q"]');
 
-        $('.clear-search').click(function() {
-            $('input[name="q"]').val('');
-            $('.search-bar').hide();
-            window.location.href = "{% url 'liste_commandes' %}";
-            return false;
-        });
-
-        $('form').submit(function(event) {
-            // Keep the search bar visible after form submission
-            if ($('input[name="q"]').val().trim() !== '') {
-                $('.search-bar').show();
+            if (currentPath.includes('liste_commandes')) {
+                searchForm.action = "{% url 'liste_commandes' %}";
+            } else if (currentPath.includes('liste_factures')) {
+                searchForm.action = "{% url 'liste_factures' %}";
+            } else if (currentPath.includes('liste_devis')) {
+                searchForm.action = "{% url 'liste_devis' %}";
+            } else if (currentPath.includes('liste_bon_livraison')) {
+                searchForm.action = "{% url 'liste_bon_livraison' %}";
             }
-        });
+
+            document.getElementById('search-toggle').addEventListener('click', function () {
+                document.querySelector('.search-bar').classList.toggle('active');
+            });
+
+            document.querySelector('.clear-search').addEventListener('click', function () {
+                searchInput.value = '';
+            });
 
         // Debugging: Ensure the script runs
         console.log("JavaScript is working correctly!");
     });
 </script>
+{% block extra_scripts %}{% endblock %}
+
 </body>
 </html>

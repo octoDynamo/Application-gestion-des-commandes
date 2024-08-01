@@ -26,19 +26,46 @@
                     <td>{{ facture.company_reference_number }}</td>
                     <td>{{ facture.facture_status }}</td>
                     <td>
+                    
+                        <form method="post" action="{% url 'update_facture_status' facture.pk %}">
+                        {% csrf_token %}
                         {% if facture.remarque == 'paye' %}
-                            Payé
+                        Payé
                         {% else %}
-                            <form method="post" action="{% url 'update_facture_status' facture.pk %}">
-                            {% csrf_token %}
+                        <label>
                             <input type="checkbox" name="remarque" value="paye" onchange="this.form.submit()">
-                        </form>
+                            Non Payé
+                        </label>
                         {% endif %}
+                        </form>
                     </td>
                     <td>
                     <a href="{% url 'generer_facture' facture.pk %}" class="btn btn-sm btn-secondary"><i class="fas fa-file-invoice"></i></a>
+                    <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteModal{{ facture.pk }}"><i class="fas fa-trash"></i></button>
+
+                        <!-- Modal -->
+                        <div id="deleteModal{{ facture.pk }}" class="modal fade" role="dialog">
+                            <div class="modal-dialog">
+                                <!-- Modal content-->
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h4 class="modal-title">Confirmation de suppression</h4>
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Êtes-vous sûr de vouloir supprimer cette facture?</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <form method="post" action="{% url 'supprimer_facture' facture.pk %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger">Supprimer</button>
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </td>
-            </tr>
             {% endfor %}
         </tbody>
     </table>

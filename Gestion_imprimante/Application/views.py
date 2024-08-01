@@ -51,13 +51,12 @@ def liste_commandes(request):
     if query:
         commandes = Commande.objects.filter(
             Q(order_id__icontains=query) |
-            Q(company_reference_number__icontains=query) |
-            Q(client_name__icontains=query) |
-            Q(order_status__icontains=query)
+            Q(client_name__icontains=query)  
         )
     else:
-        commandes = Commande.objects.all()
-    is_director = request.user.groups.filter(name='Directeurs').exists()
+        commandes = Commande.objects.filter(order_status__in=['draft', 'completed'])
+    is_assistant = request.user.groups.filter(name='Assistants').exists()
+    is_director = request.user.groups.filter(name='Directeurs').exists()    
     return render(request, 'Application/liste_commandes.html', {'commandes': commandes, 'is_director': is_director})
 
 @login_required
@@ -72,10 +71,12 @@ def liste_factures(request):
     query = request.GET.get('q')
     if query:
         factures = Commande.objects.filter(
-            Q(order_id__icontains=query) |
-            Q(company_reference_number__icontains=query) |
-            Q(client_name__icontains=query) |
-            Q(facture_status__icontains=query)
+            Q(order_status='completed') & (
+                Q(order_id__icontains=query) |
+                Q(company_reference_number__icontains=query) |
+                Q(client_name__icontains=query) |
+                Q(facture_numero__icontains=query)
+            )
         )
     else:
         factures = Commande.objects.filter(order_status='completed').order_by('-date_time')
@@ -112,17 +113,6 @@ def situation_client(request):
 
     return render(request, 'Application/situation_client.html', {'commandes': commandes, 'query': query})
 
-@login_required
-@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
-def update_remarque(request, pk):
-    facture = get_object_or_404(Commande, pk=pk)
-    if request.method == 'POST':
-        remarque = request.POST.get('remarque')
-        facture.remarque = remarque
-        if remarque == 'paye':
-            facture.facture_status = 'facture_termine'
-        facture.save()
-    return redirect('liste_factures')
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Assistants').exists())
@@ -146,6 +136,15 @@ def supprimer_commande(request, pk):
     log_action(request.user, 'delete', commande)
     commande.delete()
     return redirect('liste_commandes')
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def supprimer_facture(request, pk):
+    facture = get_object_or_404(Commande, pk=pk)
+    if request.method == 'POST':
+        facture.delete()
+        return redirect('liste_factures')
+    return render(request, 'Application/confirmer_suppression_facture.html', {'facture': facture})
 
 @login_required
 def modifier_commande(request, pk):
@@ -232,20 +231,45 @@ def designation_commande(request, pk):
         for designation_id, designation_name in enumerate(designations):
             designation = Designation.objects.create(name=designation_name, commande=commande)
             option_names = request.POST.getlist(f'options[{designation_id}][]')
-            formats = request.POST.getlist(f'formats[{designation_id}][]')
-            quantities = request.POST.getlist(f'quantities[{designation_id}][]')
-            paper_types = request.POST.getlist(f'paper_types[{designation_id}][]')
+            formats = request.POST.getlist(f'formats[{designation_id}][]', default=[""] * len(option_names))
+            quantities = request.POST.getlist(f'quantities[{designation_id}][]', default=["0"] * len(option_names))
+            grammages = request.POST.getlist(f'grammages[{designation_id}][]', default=[""] * len(option_names))
+            paper_types = request.POST.getlist(f'paper_types[{designation_id}][]', default=[""] * len(option_names))
+            recto_versos = request.POST.getlist(f'recto_verso[{designation_id}][]', default=[""] * len(option_names))
 
             for i in range(len(option_names)):
                 if option_names[i]:
-                    quantity = quantities[i] if quantities[i] else 0
+                    quantity = int(quantities[i]) if quantities[i] else 0
                     Option.objects.create(
                         designation=designation,
                         option_name=option_names[i],
                         format=formats[i],
-                        quantity=int(quantity),
-                        paper_type=paper_types[i]
+                        quantity=quantity,
+                        grammage=grammages[i],
+                        paper_type=paper_types[i],
+                        recto_verso=recto_versos[i]
                     )
+
+            # Handle the finishing options
+            spirals = request.POST.getlist(f'spiral[{designation_id}][]')
+            piquages = request.POST.getlist(f'piquage[{designation_id}][]')
+            collages = request.POST.getlist(f'collage[{designation_id}][]')
+            cousus = request.POST.getlist(f'cousu[{designation_id}][]')
+            pelliculage_mats = request.POST.getlist(f'pelliculage_mat[{designation_id}][]')
+            pelliculage_brillants = request.POST.getlist(f'pelliculage_brillant[{designation_id}][]')
+
+            for spiral in spirals:
+                Option.objects.create(designation=designation, option_name='Spiral', quantity=1 if spiral else 0)
+            for piquage in piquages:
+                Option.objects.create(designation=designation, option_name='Piquage', quantity=1 if piquage else 0)
+            for collage in collages:
+                Option.objects.create(designation=designation, option_name='Collage', quantity=1 if collage else 0)
+            for cousu in cousus:
+                Option.objects.create(designation=designation, option_name='Cousu', quantity=1 if cousu else 0)
+            for pelliculage_mat in pelliculage_mats:
+                Option.objects.create(designation=designation, option_name=f'Pelliculage Mat {pelliculage_mat}', quantity=1 if pelliculage_mat else 0)
+            for pelliculage_brillant in pelliculage_brillants:
+                Option.objects.create(designation=designation, option_name=f'Pelliculage Brillant {pelliculage_brillant}', quantity=1 if pelliculage_brillant else 0)
 
         commande.order_status = 'completed'
         commande.save()
@@ -269,7 +293,6 @@ def designation_commande(request, pk):
         return redirect('liste_commandes')
 
     return render(request, 'Application/designation_commande.html', {'commande': commande})
-
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def generer_facture(request, pk):
@@ -367,8 +390,6 @@ def update_facture_status(request, pk):
         facture.remarque = remarque
         if remarque == 'paye':
             facture.facture_status = 'facture_termine'
-        else:
-            facture.remarque = 'non_paye'
         facture.save()
     return redirect('liste_factures')
 
