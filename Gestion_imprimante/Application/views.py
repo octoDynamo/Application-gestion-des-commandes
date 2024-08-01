@@ -89,30 +89,20 @@ def liste_bon_livraison(request):
     return render(request, 'Application/liste_bon_livraison.html', {'commandes': commandes})
 
 logger = logging.getLogger(__name__)
+
 @login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def situation_client(request):
     query = request.GET.get('q')
-    commandes = []
-
+    print(f"Search Query: {query}")  # Debugging line
     if query:
-        # Debug: Print the raw query
-        print(f"Raw query: {query}")
-        
-        # Filter commandes based on the query
         commandes = Commande.objects.filter(company_reference_number__icontains=query)
-        
-        # Debug: Print the queryset
-        print(f"Filtered commandes: {commandes}")
+        print(f"Commandes found: {[commande.company_reference_number for commande in commandes]}")  # Debugging line
     else:
-        # Debug: Indicate no query was provided
-        print("No query provided.")
-    
-    # Debug: Print if commandes is empty or not
-    if not commandes:
-        print("No commandes found.")
+        commandes = Commande.objects.all()
+        print("No query provided or no specific results found, showing all commandes")  # Debugging line
 
     return render(request, 'Application/situation_client.html', {'commandes': commandes, 'query': query})
-
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Assistants').exists())
