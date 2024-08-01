@@ -1,70 +1,102 @@
+{% load custom_filters %}
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Facture</title>
     <style>
         @page {
             size: A4;
-            margin: 2cm;
+            margin: 0;
         }
         body {
-            font-family: Arial, sans-serif;
+            font-family:system-ui;
             margin: 0;
             padding: 0;
-            background: url("{{ image_url }}") no-repeat center center fixed;
+            background: url("{{ image_url }}") no-repeat center center;
             background-size: cover;
             position: relative;
             z-index: 1;
         }
-        .content {
-            position: relative;
-            z-index: 2;
-            background: rgba(255, 255, 255, 0.8); /* Optional: to improve readability */
-            padding: 1cm;
-            margin-bottom: 2cm; /* Ensure there's enough space at the bottom */
-        }
-        h1, h2, h3, p {
+        h2 {
             margin: 0;
             padding: 0;
         }
-        .header, .footer {
+        .content {
+            margin: 300px 80px 90px 80px; /* 92px from top, 97px from bottom, and 30px from left and right */
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+
+        }
+        .header-left {
+            width: 70%;
+        }
+        .header-right {
+            width: 30%;
+            text-align: right;
+        }
+        .separator {
+            margin: 10px 0;
+            border-bottom: 2px solid black;
+        }
+        h1 {
             text-align: center;
             margin-bottom: 20px;
         }
-        .footer {
-            position: absolute;
-            bottom: 1cm;
-            width: 100%;
-            text-align: center;
-            font-size: 0.8em;
+        .info {
+            margin-bottom: 20px;
+        }
+        .info .client-info {
+            margin-top: 20px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
         }
         th, td {
-            border: 1px solid #000;
             padding: 8px;
             text-align: left;
         }
         th {
-            background: #f2f2f2;
+            background-color: #f2f2f200;
+        }
+        .total {
+            font-weight: bold;
+        }
+        .right-align {
+            text-align: right;
+        }
+        .page-break {
+            page-break-after: always;
         }
     </style>
 </head>
 <body>
     <div class="content">
         <div class="header">
-            <h1>Facture N° {{ commande.facture_numero }}/YEAR</h1>
-            <p>Rabat, le {{ date }}</p>
+            <div class="header-left">
+                <p>Facture N° {{ commande.order_id }}/YEAR</p>
+            </div>
+            <div class="header-right">
+                <p>Rabat, le {{ date }}</p>
+            </div>
         </div>
-
-        <p><strong>Nom_Client :</strong> {{ commande.client_name }}</p>
-        <p><strong>ICE :</strong> {{ commande.ice }}</p>
-        <p><strong>BC N° :</strong> {{ bc_number }}</p>
-        <p><strong>Date BC :</strong> {{ date_bc }}</p>
+        <div class="separator"></div>
+        <div class="info">
+            <p><strong>Nom_Client :</strong> {{ commande.client_name }}</p>
+            <p><strong>ICE :</strong> {{ commande.ice }}</p>
+            <p><strong>BC N° :</strong> {{ bc_number }}</p>
+            <p><strong>Date BC :</strong> {{ date_bc }}</p>
+        </div>
 
         <table>
             <thead>
@@ -77,29 +109,36 @@
                 </tr>
             </thead>
             <tbody>
-                {% for option in commande.options.all %}
+                {% for designation in commande.designations.all %}
+                {% for option in designation.options.all %}
                 <tr>
-                    <td>{{ forloop.counter }}</td>
-                    <td>{{ option.designation.designation_name }}<br>
-                        {% for detail in option.details.all %}
-                        * {{ detail.name }}<br>
-                        {% endfor %}
+                    <td>{{ forloop.parentloop.counter }}</td>
+                    <td>
+                        {{ designation.name }}<br>
+                        {% if option.option_name %} * {{ option.option_name }}{% endif %}
+                        {% if option.format %} * {{ option.format }}{% endif %}
+                        {% if option.paper_type %} * {{ option.paper_type }}{% endif %}
                     </td>
-                    <td>{{ option.quantity }}</td>
-                    <td>{{ option.unit_price }}</td>
-                    <td>{{ option.total_ht }}</td>
+                    <td class="right-align"> {{ option.quantity|default_zero }} </td>
+                    <td class="right-align">{{ option.unit_price|default_zero|floatformat:2 }}</td>
+                    <td class="right-align">{{ option.unit_price|default_zero|multiply:option.quantity|default_zero|floatformat:2 }}</td>
                 </tr>
                 {% endfor %}
+                {% endfor %}
+                <tr class="total">
+                    <td colspan="4">TOTAL HT</td>
+                    <td>{{ total_ht|floatformat:2 }}</td>
+                </tr>
+                <tr class="total">
+                    <td colspan="4">TVA 20%</td>
+                    <td>{{ tva_20|floatformat:2 }}</td>
+                </tr>
+                <tr class="total">
+                    <td colspan="4">TOTAL TTC</td>
+                    <td>{{ total_ttc|floatformat:2 }}</td>
+                </tr>
             </tbody>
         </table>
-
-        <p><strong>TOTAL HT :</strong> {{ total_ht }}</p>
-        <p><strong>TVA 20% :</strong> {{ tva_20 }}</p>
-        <p><strong>TOTAL TTC :</strong> {{ total_ttc }}</p>
-    </div>
-    <div class="footer">
-        <p>99, Rue Napoli, Magasin 8, Océan, - Rabat - Tél/Fax: 05 37 66 15 54 - GSM: 06 10 32 03 04 - E-mail: familiaconcept@hotmail.com</p>
-        <p>R.C.: 76397 - I.F.: 3384957 - Patente: 26398560 - CNSS: 8127773 - Cpt B.: 011 810 0000 26 010 20 07364 24 Agence BMCE - Rabat</p>
     </div>
 </body>
 </html>

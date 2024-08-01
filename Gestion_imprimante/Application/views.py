@@ -62,8 +62,19 @@ def liste_commandes(request):
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def liste_devis(request):
-    commandes = Commande.objects.all()
-    return render(request, 'Application/liste_devis.html', {'commandes': commandes})
+    query = request.GET.get('q')
+    if query:
+        devis = Commande.objects.filter(
+            Q(order_status='completed') & (
+            Q(order_id__icontains=query) |
+            Q(company_reference_number__icontains=query) |
+            Q(client_name__icontains=query) |
+            Q(facture_numero__icontains=query)
+            )
+        )
+    else:
+        devis = Commande.objects.filter(order_status='completed').order_by('-date_time')
+    return render(request, 'Application/liste_devis.html', {'devis': devis})
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
@@ -134,7 +145,16 @@ def supprimer_facture(request, pk):
     if request.method == 'POST':
         facture.delete()
         return redirect('liste_factures')
-    return render(request, 'Application/confirmer_suppression_facture.html', {'facture': facture})
+    return render(request, 'Application/supprimer_facture.html', {'facture': facture})
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def supprimer_devis(request, pk):
+    devis = get_object_or_404(Commande, pk=pk)
+    if request.method == 'POST':
+        devis.delete()
+        return redirect('liste_devis')
+    return render(request, 'Application/supprimer_devis.html', {'devis': devis})
 
 @login_required
 def modifier_commande(request, pk):
@@ -153,6 +173,13 @@ def generer_devis(request, pk):
         quantities = request.POST.getlist('quantity[]')
         unit_prices = request.POST.getlist('unit_price[]')
         total_prices = []
+
+        if not commande.devis_numero:
+            last_devis = Commande.objects.exclude(devis_numero=None).order_by('-devis_numero').first()
+            if last_devis:
+                commande.devis_numero = last_devis.devis_numero + 1
+            else:
+                commande.devis_numero = 1
 
         for idx, option in enumerate(Option.objects.filter(designation__commande=commande)):
             unit_price = Decimal(unit_prices[idx])
@@ -201,12 +228,25 @@ def generer_devis(request, pk):
     tva_20 = total_ht * Decimal('0.20')
     total_ttc = total_ht + tva_20
 
+    commande.devis_status = 'devis_termine'  # Mark facture as complete
+    commande.save()
+
     return render(request, 'Application/generer_devis.html', {
         'commande': commande,
         'total_ht': total_ht,
         'tva_20': tva_20,
         'total_ttc': total_ttc
     })
+
+login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def update_devis_status(request, pk):
+    devis = get_object_or_404(Commande, pk=pk)
+    if request.method == 'POST':
+        devis_status = request.POST.get('devis_status')
+        devis.devis_status = devis_status
+        devis.save()
+    return redirect('liste_devis')
 
 def logout_view(request):
     logout(request)
