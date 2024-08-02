@@ -3,44 +3,57 @@
 {% block title %}Ajouter Commande{% endblock %}
 
 {% block content %}
-<h1 class="text-center my-4">Ajouter Commande</h1>
-<div class="card">
+<div class="container my-5">
+<h1 class="text-center my-4">Ajouter une Nouvelle Commande</h1>
+<div class="card shadow-sm">
     <div class="card-body">
         <form method="post">
             {% csrf_token %}
-            <div class="form-group">
-                <label for="client_name">Nom du Client</label>
-                <input type="text" class="form-control" id="client_name" name="client_name" required>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="client_name" class="form-label">Nom_Client</label>
+                    <input type="text" class="form-control" id="client_name" name="client_name" required>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="company_reference_number" class="form-label">Client_Ref</label>
+                    <input type="text" class="form-control" id="company_reference_number" name="company_reference_number" required>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="company_reference_number">Référence Client</label>
-                <input type="text" class="form-control" id="company_reference_number" name="company_reference_number" required>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="adresse">Adresse</label>
+                    <input type="text" class="form-control" id="adresse" name="adresse">
+                 </div>
+                 <div class="form-group col-md-6">
+                    <label for="email">Email</label>
+                    <input type="email" class="form-control" id="email" name="email">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="adresse">Adresse</label>
-                <input type="text" class="form-control" id="adresse" name="adresse">
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="fax">Fax</label>
+                    <input type="text" class="form-control" id="fax" name="fax">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="ice">ICE</label>
+                    <input type="text" class="form-control" id="ice" name="ice">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="infographiste">Infographiste</label>
+                    <input type="text" class="form-control" id="infographiste" name="infographiste">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" class="form-control" id="email" name="email">
-            </div>
-            <div class="form-group">
-                <label for="fax">Fax</label>
-                <input type="text" class="form-control" id="fax" name="fax">
-            </div>
-            <div class="form-group">
-                <label for="ice">ICE</label>
-                <input type="text" class="form-control" id="ice" name="ice">
-            </div>
-            <div class="form-group">
-                <label for="infographiste">Infographiste</label>
-                <input type="text" class="form-control" id="infographiste" name="infographiste">
-            </div>
+
             <div class="text-center mt-4">
-                <button type="submit" class="btn btn-primary">Suivant</button>
-                <a href="{% url 'liste_commandes' %}" class="btn btn-secondary">Annuler</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Enregistrer
+                </button>
+                <a href="{% url 'liste_commandes' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
             </div>
         </form>
     </div>
+</div>
 </div>
 {% endblock %}

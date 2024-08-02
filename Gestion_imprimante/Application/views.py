@@ -12,7 +12,7 @@ from .models import Commande, CommandeLog, Designation, Option
 from .forms import CommandeForm
 from django.db.models import Q
 from django.contrib import messages
-from weasyprint import HTML
+from weasyprint import HTML, CSS
 from decimal import Decimal
 from django.templatetags.static import static
 from django.db.models import Max
@@ -393,11 +393,62 @@ def generer_facture(request, pk):
             'total_ht': total_ht,
             'tva_20': tva_20,
             'total_ttc': total_ttc,
-            'image_url': request.build_absolute_uri(static('Application/images/devis.jpg'))
-
+            'image_url_first_page': request.build_absolute_uri(static('Application/images/fa.jpg')),
+            'image_url_other_pages': request.build_absolute_uri(static('Application/images/fa.jpg'))
         })
         html = HTML(string=html_string)
-        pdf = html.write_pdf()
+  
+        css_string = f"""
+        @page {{
+            size: A4;
+            margin: 3cm 1cm 3cm 1cm;
+        }}
+        @page :first {{
+            margin-top: 5cm;
+            background: url('{request.build_absolute_uri(static('Application/images/fa.jpg'))}') no-repeat center center;
+            background-size: cover;
+        }}
+        @page {{
+            background: url('{request.build_absolute_uri(static('Application/images/fa.jpg'))}') no-repeat center center;
+            background-size: cover;
+            margin-top: 3cm;
+            margin-bottom: 3cm;
+        }}
+        body {{
+            margin: 0;
+            padding: 0;
+            background: white;
+            box-sizing: border-box;
+        }}
+        .content {{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+
+        }}
+        .header {{
+            margin-top: 5cm; /* Adjust if needed */
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }}
+        th, td {{
+            padding: 5px;
+            text-align: left;
+            border: 1px solid black;
+        }}
+        .total {{
+            font-weight: bold;
+        }}
+        .right-align {{
+            text-align: right;
+        }}
+        """
+        css = CSS(string=css_string)
+
+        pdf = html.write_pdf(stylesheets=[css])
 
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="facture_{commande.facture_numero}.pdf"'
@@ -445,14 +496,15 @@ def generer_bon_livraison(request, pk):
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
 
-    if not commande.bl_numero:
-        max_bl_numero = Commande.objects.aggregate(Max('bl_numero'))['bl_numero__max']
-        if max_bl_numero is None:
-            max_bl_numero = 0
-        commande.bl_numero = max_bl_numero + 1
-        
+        if not commande.bl_numero:
+            max_bl_numero = Commande.objects.aggregate(Max('bl_numero'))['bl_numero__max']
+            if max_bl_numero is None:
+                max_bl_numero = 0
+            commande.bl_numero = max_bl_numero + 1
+
         commande.bl_status = 'bl_termine'
         commande.save()
+
         # Generate the PDF using WeasyPrint
         html_string = render_to_string('Application/bon_livraison_template.html', {
             'commande': commande,
