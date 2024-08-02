@@ -22,6 +22,7 @@ class Commande(models.Model):
     bc_number = models.CharField(max_length=50, blank=True, null=True)  # New field for BC number
     date_bc = models.DateField(blank=True, null=True) 
     devis_numero = models.PositiveIntegerField(unique=True, null=True, blank=True)
+    bl_numero = models.PositiveIntegerField(unique=True, null=True, blank=True)
     facture_numero = models.PositiveIntegerField(unique=True, null=True, blank=True)
     facture_status = models.CharField(max_length=50, choices=[
         ('no_facture', 'Pas de Facture'),
@@ -35,6 +36,10 @@ class Commande(models.Model):
         ('no_devis', 'Pas de Devis'),
         ('devis_termine', 'Devis Terminé')
     ], default='pas de devis')
+    bl_status = models.CharField(max_length=50, choices=[
+        ('no_bl', 'Pas de bon_livraison'),
+        ('bl_termine', 'bon_livraison Terminé')
+    ], default='pas de bon_livraison')
     designations_data = models.JSONField(default=list)  # Renamed field
     options_data = models.JSONField(default=dict)
 
@@ -51,16 +56,22 @@ class Designation(models.Model):
 class Option(models.Model):
     designation = models.ForeignKey(Designation, related_name='options', on_delete=models.CASCADE)
     option_name = models.CharField(max_length=255)
-    format = models.CharField(max_length=255)
-    quantity = models.PositiveIntegerField()
-    paper_type = models.CharField(max_length=255)
+    format = models.CharField(max_length=255, blank=True, null=True)
+    quantity = models.PositiveIntegerField(blank=True, null=True)
+    paper_type = models.CharField(max_length=255, blank=True, null=True)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_ht = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     tva_20 = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_ttc = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     grammage = models.CharField(max_length=255, blank=True, null=True)  # Ajouter ce champ
+    paragraph = models.TextField(blank=True, null=True)  # Add this field to store the paragraph input
     recto_verso = models.CharField(max_length=2, choices=[('R', 'R'), ('RV', 'R/V')], blank=True, null=True)  # Ajouter ce champ
-
+    pelliculage_mat = models.BooleanField(default=False)
+    pelliculage_brillant = models.BooleanField(default=False)
+    spiral = models.BooleanField(default=False)
+    piquage = models.BooleanField(default=False)
+    collage = models.BooleanField(default=False)
+    cousu = models.BooleanField(default=False)
     def __str__(self):
         return self.option_name
 

@@ -1,69 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Fiche de Travail</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-        }
-        .container {
-            width: 100%;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-        table, th, td {
-            border: 1px solid black;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Numéro de dossier: {{ commande.order_id }}</h1>
-        <p>Date: {{ commande.date_time }}</p>
-        <p>Nom du client: {{ commande.company_reference_number }}</p>
+{% extends "base.html" %}
 
-        <table>
-            <thead>
+{% block title %}Fiche de Travail{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Fiche de Travail</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Article</th>
+                <th>Designation</th>
+                <th>Quantité</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for designation in commande.designations.all %}
+            
                 <tr>
-                    <th>Article</th>
-                    <th>Désignations</th>
-                    <th>Quantité (QTE)</th>
+                    <td>{{ forloop.counter }}</td>
+                    <td>
+                        {{ designation.name }}<br>
+                        {% for option in designation.options.all %}
+                            {% if option.option_name %} * {{ option.option_name }}{% endif %}
+                            {% if option.format %} * {{ option.format }}{% endif %}
+                            {% if option.paper_type %} * {{ option.paper_type }}{% endif %}
+                            {% if option.paragraph %} * {{ option.paragraph }}{% endif %}
+                            {% if option.grammage %} * {{ option.grammage }}{% endif %}
+                            {% if option.recto_verso %} * {{ option.recto_verso }}{% endif %}
+                            {% if option.pelliculage_mat %} * Pelliculage Mat R{% endif %}
+                            {% if option.pelliculage_brillant %} * Pelliculage Brillant R{% endif %}
+                            {% if option.spiral %} * Spiral{% endif %}
+                            {% if option.piquage %} * Piquage{% endif %}
+                            {% if option.collage %} * Collage{% endif %}
+                            {% if option.cousu %} * Cousu{% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>{{ designation.options.first.quantity }}</td>
                 </tr>
-            </thead>
-            <tbody>
-                {% for designation in commande.designations.all %}
-                    {% for option in designation.options.all %}
-                    <tr>
-                        <td>{{ forloop.parentloop.counter }}</td>
-                        <td>
-                            <strong>{{ designation.name }}</strong><br>
-                            * {{ option.option_name }}
-                            {% if option.format %}* Format: {{ option.format }}{% endif %}
-                            {% if option.recto_verso %}* Recto/Verso: {{ option.recto_verso }}{% endif %}
-                            {% if option.grammage %}* Grammage: {{ option.grammage }}{% endif %}
-                            {% if option.paper_type %}* Type de Papier: {{ option.paper_type }}{% endif %}
-                        </td>
-                        <td>{{ option.quantity }}</td>
-                    </tr>
-                    {% endfor %}
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</body>
-</html>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

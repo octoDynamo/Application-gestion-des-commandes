@@ -8,13 +8,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.template.loader import render_to_string
-from .models import Commande, CommandeLog, Designation, Option, Prix
+from .models import Commande, CommandeLog, Designation, Option
 from .forms import CommandeForm
 from django.db.models import Q
 from django.contrib import messages
 from weasyprint import HTML
 from decimal import Decimal
 from django.templatetags.static import static
+from django.db.models import Max
 
 
 def login_view(request):
@@ -56,8 +57,7 @@ def liste_commandes(request):
     else:
         commandes = Commande.objects.filter(order_status__in=['draft', 'completed'])
     is_assistant = request.user.groups.filter(name='Assistants').exists()
-    is_director = request.user.groups.filter(name='Directeurs').exists()    
-    return render(request, 'Application/liste_commandes.html', {'commandes': commandes, 'is_director': is_director})
+    return render(request, 'Application/liste_commandes.html', {'commandes': commandes, 'is_assistant': is_assistant})
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
@@ -66,15 +66,15 @@ def liste_devis(request):
     if query:
         devis = Commande.objects.filter(
             Q(order_status='completed') & (
-            Q(order_id__icontains=query) |
             Q(company_reference_number__icontains=query) |
             Q(client_name__icontains=query) |
-            Q(facture_numero__icontains=query)
+            Q(devis_numero__icontains=query)
             )
         )
     else:
         devis = Commande.objects.filter(order_status='completed').order_by('-date_time')
-    return render(request, 'Application/liste_devis.html', {'devis': devis})
+    is_assistant = request.user.groups.filter(name='Assistants').exists()
+    return render(request, 'Application/liste_devis.html', {'devis': devis, 'is_assistant': is_assistant})
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
@@ -83,7 +83,6 @@ def liste_factures(request):
     if query:
         factures = Commande.objects.filter(
             Q(order_status='completed') & (
-                Q(order_id__icontains=query) |
                 Q(company_reference_number__icontains=query) |
                 Q(client_name__icontains=query) |
                 Q(facture_numero__icontains=query)
@@ -91,13 +90,26 @@ def liste_factures(request):
         )
     else:
         factures = Commande.objects.filter(order_status='completed').order_by('-date_time')
-    return render(request, 'Application/liste_factures.html', {'factures': factures})
+    is_assistant = request.user.groups.filter(name='Assistants').exists()    
+    return render(request, 'Application/liste_factures.html', {'factures': factures, 'is_assistant' : is_assistant})
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def liste_bon_livraison(request):
-    commandes = Commande.objects.all()
-    return render(request, 'Application/liste_bon_livraison.html', {'commandes': commandes})
+    query = request.GET.get('q')
+    if query:
+        bon_livraison = Commande.objects.filter(
+            Q(order_status='completed') & (
+                Q(company_reference_number__icontains=query) |
+                Q(client_name__icontains=query) |
+                Q(bl_numero__icontains=query)
+            )
+        )
+    else:
+        bon_livraison = Commande.objects.filter(order_status='completed').order_by('-date_time')
+    is_assistant = request.user.groups.filter(name='Assistants').exists()    
+    return render(request, 'Application/liste_bon_livraison.html', {'bon_livraison': bon_livraison, 'is_assistant' : is_assistant})
+
 
 logger = logging.getLogger(__name__)
 
@@ -157,6 +169,15 @@ def supprimer_devis(request, pk):
     return render(request, 'Application/supprimer_devis.html', {'devis': devis})
 
 @login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def supprimer_bl(request, pk):
+    bon_livraison = get_object_or_404(Commande, pk=pk)
+    if request.method == 'POST':
+        bon_livraison.delete()
+        return redirect('liste_bon_livraison')
+    return render(request, 'Application/supprimer_bl.html', {'bon_livraison': bon_livraison})
+
+@login_required
 def modifier_commande(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     log_action(request.user, 'modify', commande)
@@ -168,23 +189,24 @@ def generer_devis(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     date = datetime.now().strftime('%B %d, %Y')
 
-
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
         unit_prices = request.POST.getlist('unit_price[]')
         total_prices = []
 
+        # Generate a unique devis_numero if it doesn't exist
         if not commande.devis_numero:
-            last_devis = Commande.objects.exclude(devis_numero=None).order_by('-devis_numero').first()
-            if last_devis:
-                commande.devis_numero = last_devis.devis_numero + 1
-            else:
-                commande.devis_numero = 1
+            max_devis_numero = Commande.objects.aggregate(Max('devis_numero'))['devis_numero__max']
+            if max_devis_numero is None:
+                max_devis_numero = 0
 
         for idx, option in enumerate(Option.objects.filter(designation__commande=commande)):
-            unit_price = Decimal(unit_prices[idx])
-            option.unit_price = unit_price
-            option.total_ht = unit_price * option.quantity
+            try:
+                    unit_price = Decimal(unit_prices[idx])
+            except (IndexError, ValueError):
+                    unit_price = Decimal('0.00')            
+            option.unit_price = unit_price 
+            option.total_ht = unit_price * option.quantity 
             option.tva_20 = option.total_ht * Decimal('0.2')
             option.total_ttc = option.total_ht + option.tva_20
             option.save()
@@ -194,6 +216,9 @@ def generer_devis(request, pk):
         tva_20 = total_ht * Decimal('0.2')
         total_ttc = total_ht + tva_20
 
+        commande.devis_numero = max_devis_numero + 1
+        commande.devis_status = 'devis_termine'
+        commande.save()
         # Generate the PDF using WeasyPrint
         html_string = render_to_string('Application/devis_template.html', {
             'commande': commande,
@@ -205,16 +230,15 @@ def generer_devis(request, pk):
             'tva_20': tva_20,
             'total_ttc': total_ttc,
             'image_url': request.build_absolute_uri(static('Application/images/devis.jpg'))
-
         })
         html = HTML(string=html_string)
         pdf = html.write_pdf()
 
         response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="devis_{commande.order_id}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="devis_{commande.devis_numero}.pdf"'
 
         # Save the PDF to a file and serve it
-        pdf_path = os.path.join(settings.MEDIA_ROOT, f"devis_{commande.order_id}.pdf")
+        pdf_path = os.path.join(settings.MEDIA_ROOT, f"devis_{commande.devis_numero}.pdf")
         with open(pdf_path, 'wb') as f:
             f.write(pdf)
 
@@ -227,10 +251,8 @@ def generer_devis(request, pk):
     total_ht = sum(option.unit_price * option.quantity if option.unit_price else Decimal('0.00') for designation in commande.designations.all() for option in designation.options.all())
     tva_20 = total_ht * Decimal('0.20')
     total_ttc = total_ht + tva_20
-
     commande.devis_status = 'devis_termine'  # Mark facture as complete
     commande.save()
-
     return render(request, 'Application/generer_devis.html', {
         'commande': commande,
         'total_ht': total_ht,
@@ -260,46 +282,36 @@ def designation_commande(request, pk):
         designations = request.POST.getlist('designations[]')
         for designation_id, designation_name in enumerate(designations):
             designation = Designation.objects.create(name=designation_name, commande=commande)
-            option_names = request.POST.getlist(f'options[{designation_id}][]')
-            formats = request.POST.getlist(f'formats[{designation_id}][]', default=[""] * len(option_names))
-            quantities = request.POST.getlist(f'quantities[{designation_id}][]', default=["0"] * len(option_names))
-            grammages = request.POST.getlist(f'grammages[{designation_id}][]', default=[""] * len(option_names))
-            paper_types = request.POST.getlist(f'paper_types[{designation_id}][]', default=[""] * len(option_names))
-            recto_versos = request.POST.getlist(f'recto_verso[{designation_id}][]', default=[""] * len(option_names))
+            categories = request.POST.getlist(f'categories[{designation_id}][]')
+            
+            for i, category in enumerate(categories):
+                if category:
+                    quantity_str = request.POST.getlist(f'quantities[{designation_id}][]')
+                    quantity = int(quantity_str[i]) if quantity_str and i < len(quantity_str) and quantity_str[i].isdigit() else 0
 
-            for i in range(len(option_names)):
-                if option_names[i]:
-                    quantity = int(quantities[i]) if quantities[i] else 0
-                    Option.objects.create(
-                        designation=designation,
-                        option_name=option_names[i],
-                        format=formats[i],
-                        quantity=quantity,
-                        grammage=grammages[i],
-                        paper_type=paper_types[i],
-                        recto_verso=recto_versos[i]
-                    )
-
-            # Handle the finishing options
-            spirals = request.POST.getlist(f'spiral[{designation_id}][]')
-            piquages = request.POST.getlist(f'piquage[{designation_id}][]')
-            collages = request.POST.getlist(f'collage[{designation_id}][]')
-            cousus = request.POST.getlist(f'cousu[{designation_id}][]')
-            pelliculage_mats = request.POST.getlist(f'pelliculage_mat[{designation_id}][]')
-            pelliculage_brillants = request.POST.getlist(f'pelliculage_brillant[{designation_id}][]')
-
-            for spiral in spirals:
-                Option.objects.create(designation=designation, option_name='Spiral', quantity=1 if spiral else 0)
-            for piquage in piquages:
-                Option.objects.create(designation=designation, option_name='Piquage', quantity=1 if piquage else 0)
-            for collage in collages:
-                Option.objects.create(designation=designation, option_name='Collage', quantity=1 if collage else 0)
-            for cousu in cousus:
-                Option.objects.create(designation=designation, option_name='Cousu', quantity=1 if cousu else 0)
-            for pelliculage_mat in pelliculage_mats:
-                Option.objects.create(designation=designation, option_name=f'Pelliculage Mat {pelliculage_mat}', quantity=1 if pelliculage_mat else 0)
-            for pelliculage_brillant in pelliculage_brillants:
-                Option.objects.create(designation=designation, option_name=f'Pelliculage Brillant {pelliculage_brillant}', quantity=1 if pelliculage_brillant else 0)
+                    if designation_name in ['IMPRESSION OFFSET', 'IMPRESSION PETIT FORMAT (NUMÉRIQUE)']:
+                        option = Option.objects.create(
+                            designation=designation,
+                            option_name=category,
+                            format=request.POST.getlist(f'formats[{designation_id}][]')[i] if request.POST.getlist(f'formats[{designation_id}][]') else "",
+                            quantity=quantity,
+                            grammage=request.POST.getlist(f'grammages[{designation_id}][]')[i] if request.POST.getlist(f'grammages[{designation_id}][]') else "",
+                            paper_type=request.POST.getlist(f'paper_types[{designation_id}][]')[i] if request.POST.getlist(f'paper_types[{designation_id}][]') else "",
+                            recto_verso=request.POST.getlist(f'recto_versos[{designation_id}][]')[i] if request.POST.getlist(f'recto_versos[{designation_id}][]') else "",
+                            pelliculage_mat=request.POST.get(f'pelliculage_mat[{designation_id}][]') is not None,
+                            pelliculage_brillant=request.POST.get(f'pelliculage_brillant[{designation_id}][]') is not None,
+                            spiral=request.POST.get(f'spiral[{designation_id}][]') is not None,
+                            piquage=request.POST.get(f'piquage[{designation_id}][]') is not None,
+                            collage=request.POST.get(f'collage[{designation_id}][]') is not None,
+                            cousu=request.POST.get(f'cousu[{designation_id}][]') is not None
+                        )
+                    else:
+                        option = Option.objects.create(
+                            designation=designation,
+                            option_name=category,
+                            quantity=quantity,
+                            paragraph=request.POST.getlist(f'paragraphs[{designation_id}][]')[i] if request.POST.getlist(f'paragraphs[{designation_id}][]') else ""
+                        )
 
         commande.order_status = 'completed'
         commande.save()
@@ -428,21 +440,33 @@ def update_facture_status(request, pk):
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def generer_bon_livraison(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
+    date = datetime.now().strftime('%B %d, %Y')
+
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
 
+    if not commande.bl_numero:
+        max_bl_numero = Commande.objects.aggregate(Max('bl_numero'))['bl_numero__max']
+        if max_bl_numero is None:
+            max_bl_numero = 0
+        commande.bl_numero = max_bl_numero + 1
+        
+        commande.bl_status = 'bl_termine'
+        commande.save()
         # Generate the PDF using WeasyPrint
         html_string = render_to_string('Application/bon_livraison_template.html', {
             'commande': commande,
-            'quantities': quantities
+            'date': date,
+            'quantities': quantities,
+            'image_url': request.build_absolute_uri(static('Application/images/devis.jpg'))
         })
         html = HTML(string=html_string)
         pdf = html.write_pdf()
 
         response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="bon_livraison_{commande.order_id}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="bon_livraison_{commande.bl_numero}.pdf"'
 
-        pdf_path = os.path.join(settings.MEDIA_ROOT, f"bon_livraison_{commande.order_id}.pdf")
+        pdf_path = os.path.join(settings.MEDIA_ROOT, f"bon_livraison_{commande.bl_numero}.pdf")
         with open(pdf_path, 'wb') as f:
             f.write(pdf)
 
@@ -454,6 +478,16 @@ def generer_bon_livraison(request, pk):
     return render(request, 'Application/generer_bon_livraison.html', {
         'commande': commande
     })
+
+login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def update_bl_status(request, pk):
+    bon_livraison = get_object_or_404(Commande, pk=pk)
+    if request.method == 'POST':
+        bl_status = request.POST.get('bl_status')
+        bon_livraison.bl_status = bl_status
+        bon_livraison.save()
+    return redirect('liste_bon_livraison')
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())

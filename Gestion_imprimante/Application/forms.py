@@ -1,5 +1,6 @@
 from django import forms
 from .models import Commande
+from .models import Option
 
 class CommandeForm(forms.ModelForm):
     class Meta:

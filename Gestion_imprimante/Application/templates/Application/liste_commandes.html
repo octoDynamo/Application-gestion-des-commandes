@@ -3,7 +3,6 @@
 {% block title %}Liste des Commandes{% endblock %}
 
 {% block content %}
-{% if commandes %}
 <h1 class="text-center my-4">Liste des Commandes</h1>
 <div class="d-flex justify-content-center">
     <div class="table-responsive">
@@ -19,6 +18,7 @@
             </tr>
         </thead>
         <tbody>
+            {% if commandes %}
             {% for commande in commandes %}
             <tr>
                 <td>{{ commande.order_id }}</td>
@@ -28,17 +28,17 @@
                 <td>{{ commande.order_status }}</td>
                 <td>
                     <a href="{% url 'modifier_commande' commande.pk %}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
-                    <a href="{% url 'supprimer_commande' commande.pk %}" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></a>
+                    <a href="{% url 'supprimer_commande' commande.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Etes vous sure de supprimer cette commande?');"><i class="fas fa-trash"></i></a>
                 </td>
             </tr>
             {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">Aucune commande disponible.</td>
+                </tr>
+            {% endif %}
         </tbody>
     </table>
-    {% else %}
-    <div class="alert alert-warning" role="alert">
-        Aucun résultat trouvé pour "{{ query }}".
-    </div>
-{% endif %}
 </div>
 </div>
 {% endblock %}

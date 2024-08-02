@@ -1,15 +1,15 @@
 {% extends "base_no_nav.html" %}
 
-{% block title %}Supprimer Devis{% endblock %}
+{% block title %}Supprimer bon_livraison{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <h1>Confirmation de suppression</h1>
-    <p>Êtes-vous sûr de vouloir supprimer le devis N° {{ devis.devis_numero }} ?</p>
+    <p>Êtes-vous sûr de vouloir supprimer le bon_livraison N° {{ bon_livraison.bl_numero }} ?</p>
     <form method="post">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">Supprimer</button>
-        <a href="{% url 'liste_devis' %}" class="btn btn-secondary">Annuler</a>
+        <a href="{% url 'liste_bon_livraison' %}" class="btn btn-secondary">Annuler</a>
     </form>
 </div>
 {% endblock %}

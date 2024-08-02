@@ -67,17 +67,28 @@
             </thead>
             <tbody>
                 {% for designation in commande.designations.all %}
-                {% for option in designation.options.all %}
+            
                 <tr>
                     <td>{{ forloop.counter }}</td>
-                    <td>{{ designation.name }}<br>
-                        {% if option.option_name %} * {{ option.option_name }}{% endif %}
-                        {% if option.format %} * {{ option.format }}{% endif %}
-                        {% if option.paper_type %} * {{ option.paper_type }}{% endif %}
+                    <td>
+                        {{ designation.name }}<br>
+                        {% for option in designation.options.all %}
+                            {% if option.option_name %} * {{ option.option_name }}{% endif %}
+                            {% if option.format %} * {{ option.format }}{% endif %}
+                            {% if option.paper_type %} * {{ option.paper_type }}{% endif %}
+                            {% if option.paragraph %} * {{ option.paragraph }}{% endif %}
+                            {% if option.grammage %} * {{ option.grammage }}{% endif %}
+                            {% if option.recto_verso %} * {{ option.recto_verso }}{% endif %}
+                            {% if option.pelliculage_mat %} * Pelliculage Mat R{% endif %}
+                            {% if option.pelliculage_brillant %} * Pelliculage Brillant R{% endif %}
+                            {% if option.spiral %} * Spiral{% endif %}
+                            {% if option.piquage %} * Piquage{% endif %}
+                            {% if option.collage %} * Collage{% endif %}
+                            {% if option.cousu %} * Cousu{% endif %}
+                        {% endfor %}
                     </td>
-                    <td>{{ option.quantity }}</td>
+                    <td>{{ designation.options.first.quantity }}</td>
                 </tr>
-                {% endfor %}
                 {% endfor %}
             </tbody>
         </table>

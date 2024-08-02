@@ -124,7 +124,7 @@ function generateCategoryHTML(designation, category, index, designationId) {
         return `<div class="card mb-3">
                     <div class="card-header">
                         <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input option-checkbox" id="option${designationId}_${index}" name="options[${designationId}][]" value="${category}">
+                            <input type="checkbox" class="custom-control-input option-checkbox" id="option${designationId}_${index}" name="categories[${designationId}][]" value="${category}">
                             <label class="custom-control-label" for="option${designationId}_${index}">${category}</label>
                         </div>
                     </div>
@@ -137,7 +137,7 @@ function generateCategoryHTML(designation, category, index, designationId) {
         return `<div class="card mb-3">
                     <div class="card-header">
                         <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input option-checkbox" id="option${designationId}_${index}" name="options[${designationId}][]" value="${category}">
+                            <input type="checkbox" class="custom-control-input option-checkbox" id="option${designationId}_${index}" name="categories[${designationId}][]" value="${category}">
                             <label class="custom-control-label" for="option${designationId}_${index}">${category}</label>
                         </div>
                     </div>
@@ -156,7 +156,7 @@ function generateImpressionOptions(designationId, index) {
                 </div>
                 <div class="form-group">
                     <label for="recto_verso${designationId}_${index}">R/RV:</label>
-                    <select id="recto_verso${designationId}_${index}" name="recto_verso[${designationId}][]" class="form-control">
+                    <select id="recto_verso${designationId}_${index}" name="recto_versos[${designationId}][]" class="form-control">
                         <option value="R">R</option>
                         <option value="RV">R/V</option>
                     </select>
@@ -226,7 +226,7 @@ function generateGeneralOptions(designationId, index) {
                 </div>
                 <div class="form-group">
                     <label for="designation${designationId}_${index}">Désignation:</label>
-                    <textarea id="designation${designationId}_${index}" name="designations[${designationId}][]" class="form-control"></textarea>
+                    <textarea id="designation${designationId}_${index}" name="paragraphs[${designationId}][]" class="form-control"></textarea>
                 </div>
             </div>`;
 }

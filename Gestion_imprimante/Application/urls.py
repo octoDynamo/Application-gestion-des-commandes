@@ -24,6 +24,8 @@ urlpatterns = [
     path('supprimer_facture/<int:pk>/', views.supprimer_facture, name='supprimer_facture'),
     path('update_devis_status/<int:pk>/', views.update_devis_status, name='update_devis_status'),
     path('supprimer_devis/<int:pk>/', views.supprimer_devis, name='supprimer_devis'),
+    path('update_bl_status/<int:pk>/', views.update_bl_status, name='update_bl_status'),
+    path('supprimer_bl/<int:pk>/', views.supprimer_bl, name='supprimer_bl'),
 ]
 
 
