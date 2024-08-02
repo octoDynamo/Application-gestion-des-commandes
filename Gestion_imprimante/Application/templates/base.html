@@ -8,21 +8,20 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
     <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
         html, body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', sans-serif;
             height: 100%;
             margin: 0;
             padding: 0;
             overflow: hidden; /* Prevents scrolling */
-        }
-        body {
-            background-image: url("{% static 'Application/images/hajar familia.png' %}");
+            background: url("{% static 'Application/images/hajar familia.png' %}") no-repeat center center fixed;
             background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
         }
         .navbar {
             background-color: rgba(255, 255, 255, 0);
@@ -46,20 +45,15 @@
             color: #ffe600;
             text-shadow: 0 0 5px rgb(221, 207, 48);
         }
-        .content-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: calc(100vh - 275px); /* Subtract the height of the navbar */
-            padding: 20px;
-        }
+        
         .container {
             background: rgba(255, 255, 255, 0.732);
-            padding: 20px;
-            border-radius: 10px;
+            padding: 30px;
+            border-radius: 15px;
+            align-items: center;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            width: 100%;
+            max-width: 1200px;
+            margin: 50px auto;
         }
         .search-bar {
             display: none;
@@ -96,6 +90,40 @@
             background-color: rgba(255, 255, 255, 0.8);
             padding: 10px 0;
         }
+        .table th, .table td {
+        vertical-align: middle;
+    }
+
+    .btn {
+        margin-right: 5px;
+    }
+
+    h1 {
+        font-family: 'Roboto', sans-serif;
+        font-weight: bold;
+        color: #95c135;
+    }
+
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .table th, .table td {
+        vertical-align: middle;
+    }
+    .table th {
+        background-color: #343a40;
+        color: #fff;
+    }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
     </style>
 </head>
 <body>
