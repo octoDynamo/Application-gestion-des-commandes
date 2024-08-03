@@ -1,5 +1,4 @@
 {% extends "base_no_nav.html" %}
-
 {% load custom_filters %}
 
 {% block title %}Générer Bon de Livraison{% endblock %}
@@ -71,6 +70,7 @@
             <table class="table table-striped table-bordered custom-table">
                 <thead>
                     <tr>
+                        <th>Sélectionner</th>
                         <th>Article</th>
                         <th>Designations</th>
                         <th>QTE</th>
@@ -79,11 +79,14 @@
                 <tbody>
                     {% for designation in commande.designations.all %}
                     <tr>
+                        <td>
+                            <input type="checkbox" name="selected_commandes" value="{{ designation.id }}">
+                        </td>
                         <td>{{ forloop.counter }}</td>
                         <td>
                             {{ designation.name }}<br>
                             {% for option in designation.options.all %}
-                                {% if option.option_name %} * {{ option.option_name }}{% endif %}:<br>
+                                {% if option.option_name %} * {{ option.option_name }}{% endif %}
                                 {% if option.format %} * {{ option.format }}{% endif %}
                                 {% if option.paper_type %} * {{ option.paper_type }}{% endif %}
                                 {% if option.paragraph %} * {{ option.paragraph }}{% endif %}
