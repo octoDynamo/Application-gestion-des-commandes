@@ -1,32 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Situation Client</title>
     <style>
-        /* Add necessary styles for your client situation report PDF */
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
-    <h1>Situation des factures pour le client: {{ client_ref }}</h1>
-    <h2>Commandes impayées:</h2>
+    <div class="header">
+        <h1>Situation Client</h1>
+        <p>Référence Client: {{ client_ref }}</p>
+    </div>
     <table>
         <thead>
             <tr>
-                <th>Numéro de dossier</th>
-                <th>Date</th>
+                <th>Numéro de Commande</th>
+                <th>Référence Client</th>
+                <th>Nom du Client</th>
+                <th>Date et Heure</th>
                 <th>Statut</th>
-                <th>Total</th>
             </tr>
         </thead>
         <tbody>
-            {% for commande in commandes %}
-                <tr>
-                    <td>{{ commande.order_id }}</td>
-                    <td>{{ commande.date_time }}</td>
-                    <td>{{ commande.order_status }}</td>
-                    <td>{{ commande.total }}</td> <!-- Assuming you have a 'total' field in your Commande model -->
-                </tr>
+            {% for facture in factures %}
+            <tr>
+                <td>{{ facture.order_id }}</td>
+                <td>{{ facture.company_reference_number }}</td>
+                <td>{{ facture.client_name }}</td>
+                <td>{{ facture.date_time }}</td>
+                <td>{{ facture.order_status }}</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>

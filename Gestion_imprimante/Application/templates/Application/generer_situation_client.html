@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Générer Situation Client{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center header-title my-4">Générer Situation Client</h1>
+    <form method="POST" action="{% url 'generer_situation_client' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Générer</button>
+    </form>
+</div>
+{% endblock %}

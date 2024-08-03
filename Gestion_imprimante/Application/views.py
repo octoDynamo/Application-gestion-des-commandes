@@ -15,7 +15,7 @@ from django.contrib import messages
 from weasyprint import HTML, CSS
 from decimal import Decimal
 from django.templatetags.static import static
-from django.db.models import Max
+from .forms import SituationClientForm
 
 
 def login_view(request):
@@ -114,16 +114,50 @@ logger = logging.getLogger(__name__)
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
+def generer_situation_client(request):
+    form = SituationClientForm()
+    if request.method == 'POST':
+        form = SituationClientForm(request.POST)
+        if form.is_valid():
+            client_ref = form.cleaned_data['client_ref']
+            factures = Commande.objects.filter(company_reference_number=client_ref, order_status='completed', remarque='non_paye')
+            html_string = render_to_string('Application/situation_client_template.html', {'factures': factures, 'client_ref': client_ref})
+            html = HTML(string=html_string)
+            pdf = html.write_pdf()
+
+            response = HttpResponse(pdf, content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="situation_client_{client_ref}.pdf"'
+
+            pdf_path = os.path.join(settings.MEDIA_ROOT, f"situation_client_{client_ref}.pdf")
+            with open(pdf_path, 'wb') as f:
+                f.write(pdf)
+
+            if os.name == 'nt':
+                os.startfile(pdf_path)
+
+            return redirect('liste_commandes')
+
+    return render(request, 'Application/generer_situation_client.html', {'form': form})
+
+@login_required
+@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def situation_client(request):
     query = request.GET.get('q')
     if query:
-        commandes = Commande.objects.filter(company_reference_number__icontains=query)
-        if not commandes.exists():
-            commandes = Commande.objects.all()
+        factures = Commande.objects.filter(company_reference_number=query, facture_status='facture_termine', remarque='non payé')
+        # Debugging: Print each facture to verify filtering
+        print(f"Query: {query}")
+        print(f"Number of factures found: {factures.count()}")
+        for facture in factures:
+            print(f"Facture: {facture.order_id}, Client: {facture.client_name}, Status: {facture.facture_status}, Remark: {facture.remarque}")
     else:
-        commandes = Commande.objects.all()
-    
-    return render(request, 'Application/situation_client.html', {'commandes': commandes})
+        factures = Commande.objects.none()
+
+    context = {
+        'query': query,
+        'factures': factures,
+    }
+    return render(request, 'Application/situation_client.html', context)
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Assistants').exists())
@@ -495,29 +529,6 @@ def update_bl_status(request, pk):
         bon_livraison.save()
     return redirect('liste_bon_livraison')
 
-@login_required
-@user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
-def situation_client(request):
-    if request.method == 'POST':
-        client_ref = request.POST.get('client_ref')
-        commandes = Commande.objects.filter(company_reference_number=client_ref, order_status='unpaid')
-        html_string = render_to_string('Application/situation_client_template.html', {'commandes': commandes, 'client_ref': client_ref})
-        html = HTML(string=html_string)
-        pdf = html.write_pdf()
-
-        response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="situation_client_{client_ref}.pdf"'
-
-        pdf_path = os.path.join(settings.MEDIA_ROOT, f"situation_client_{client_ref}.pdf")
-        with open(pdf_path, 'wb') as f:
-            f.write(pdf)
-
-        if os.name == 'nt':
-            os.startfile(pdf_path)
-
-        return redirect('liste_commandes')
-
-    return render(request, 'Application/situation_client.html')
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())

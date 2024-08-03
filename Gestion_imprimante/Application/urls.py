@@ -10,6 +10,7 @@ urlpatterns = [
     path('factures/', views.liste_factures, name='liste_factures'),
     path('bon_livraison/', views.liste_bon_livraison, name='liste_bon_livraison'),
     path('situation_client/', views.situation_client, name='situation_client'),
+    path('generer_situation_client/', views.generer_situation_client, name='generer_situation_client'),
     path('ajouter/', views.ajouter_commande, name='ajouter_commande'),
     path('supprimer/<int:pk>/', views.supprimer_commande, name='supprimer_commande'),
     path('modifier/<int:pk>/', views.modifier_commande, name='modifier_commande'),
