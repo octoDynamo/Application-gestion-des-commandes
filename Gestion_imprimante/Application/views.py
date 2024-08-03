@@ -1,6 +1,6 @@
 from datetime import datetime
 import os
-import logging
+import logging.config
 from django.shortcuts import render
 from django.conf import settings
 from django.http import HttpResponse
@@ -110,22 +110,20 @@ def liste_bon_livraison(request):
     is_assistant = request.user.groups.filter(name='Assistants').exists()    
     return render(request, 'Application/liste_bon_livraison.html', {'bon_livraison': bon_livraison, 'is_assistant' : is_assistant})
 
-
 logger = logging.getLogger(__name__)
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def situation_client(request):
     query = request.GET.get('q')
-    print(f"Search Query: {query}")  # Debugging line
     if query:
         commandes = Commande.objects.filter(company_reference_number__icontains=query)
-        print(f"Commandes found: {[commande.company_reference_number for commande in commandes]}")  # Debugging line
+        if not commandes.exists():
+            commandes = Commande.objects.all()
     else:
         commandes = Commande.objects.all()
-        print("No query provided or no specific results found, showing all commandes")  # Debugging line
-
-    return render(request, 'Application/situation_client.html', {'commandes': commandes, 'query': query})
+    
+    return render(request, 'Application/situation_client.html', {'commandes': commandes})
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Assistants').exists())

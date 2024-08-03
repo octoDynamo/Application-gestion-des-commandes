@@ -10,7 +10,6 @@
         <button type="submit" class="btn btn-primary">Rechercher</button>
     </form>
 
-    {% if commandes %}
     <div class="table-responsive">
         <h2>Résultats de recherche{% if query %} pour "{{ query }}"{% endif %}</h2>
         <table class="table table-striped table-bordered">
@@ -24,18 +23,23 @@
                 </tr>
             </thead>
             <tbody>
-                {% for commande in commandes %}
-                <tr>
-                    <td>{{ commande.order_id }}</td>
-                    <td>{{ commande.company_reference_number }}</td>
-                    <td>{{ commande.client_name }}</td>
-                    <td>{{ commande.date_time }}</td>
-                    <td>{{ commande.order_status }}</td>
-                </tr>
-                {% endfor %}
+                {% if commandes %}
+                    {% for commande in commandes %}
+                    <tr>
+                        <td>{{ commande.order_id }}</td>
+                        <td>{{ commande.company_reference_number }}</td>
+                        <td>{{ commande.client_name }}</td>
+                        <td>{{ commande.date_time }}</td>
+                        <td>{{ commande.order_status }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5">Aucun résultat trouvé.</td>
+                    </tr>
+                {% endif %}
             </tbody>
         </table>
     </div>
-    {% endif %}
 </div>
 {% endblock %}
