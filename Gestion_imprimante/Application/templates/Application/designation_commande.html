@@ -3,14 +3,88 @@
 {% block title %}Désignation de la Commande{% endblock %}
 
 {% block content %}
+<style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f8f9fa;
+    }
+    .custom-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+        padding: 20px;
+        margin-top: 30px;
+    }
+    .custom-card-body {
+        padding: 30px;
+    }
+    .form-label {
+        font-weight: bold;
+        color: #333;
+    }
+    .form-control {
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 15px;
+    }
+    .btn-primary {
+        background-color: #3498db;
+        border: none;
+        transition: background-color 0.3s ease;
+        padding: 10px 20px;
+        border-radius: 5px;
+    }
+    .btn-primary:hover {
+        background-color: #2980b9;
+    }
+    .btn-secondary {
+        background-color: #7f8c8d;
+        border: none;
+        transition: background-color 0.3s ease;
+        padding: 10px 20px;
+        border-radius: 5px;
+    }
+    .btn-secondary:hover {
+        background-color: #616a6b;
+    }
+    .text-center button, .text-center a {
+        margin: 0 10px;
+    }
+    .designation-entry .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #ddd;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .designation-entry .card-body {
+        background-color: #fdfdfd;
+    }
+    .form-check-input {
+        margin-top: 0.3rem;
+    }
+    .details {
+        margin-top: 10px;
+    }
+    .details.d-none {
+        display: none;
+    }
+    .header-title {
+        font-family: 'Roboto', sans-serif;
+        color: #333;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+</style>
+
 <div class="container mt-5">
-    <h1 class="text-center mb-4">Désignation de la Commande</h1>
-    <div class="card shadow-sm">
-        <div class="card-body">
+    <h1 class="text-center header-title mb-4">Désignation de la Commande</h1>
+    <div class="card custom-card">
+        <div class="card-body custom-card-body">
             <form method="post" id="details-form">
                 {% csrf_token %}
                 <div class="form-group mb-4">
-                    <label for="designations" class="form-labe">Désignations:</label>
+                    <label for="designations" class="form-label">Désignations:</label>
                     <div id="designations-container">
                         <!-- Les entrées de désignation seront ajoutées dynamiquement ici -->
                     </div>
@@ -30,6 +104,7 @@
         </div>
     </div>
 </div>
+
 <script>
 let designationCounter = 0;
 
@@ -38,18 +113,18 @@ document.getElementById('add-designation').addEventListener('click', function() 
     designationEntry.className = 'designation-entry mb-3';
     designationEntry.innerHTML = `
         <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between align-items-center bg-light">
-            <select class="form-control designation-select" name="designations[]" data-designation-id="${designationCounter}" required>
-                <option value="">Sélectionnez une désignation</option>
-                <option value="IMPRESSION OFFSET">Impression Offset</option>
-                <option value="IMPRESSION GRAND FORMAT">Impression Grand Format</option>
-                <option value="IMPRESSION PETIT FORMAT (NUMÉRIQUE)">Impression Petit Format (Numérique)</option>
-                <option value="IMPRESSION UV">Impression UV</option>
-                <option value="DÉCOUPE LASER PETIT ET GRAND FORMAT">Découpe Laser Petit_Grand Format</option>
-                <option value="DÉCOUPE CNC GRAND FORMAT">Découpe CNC Grand Format</option>
-                <option value="DÉCOUPE ADHÉSIF">Découpe Adhésif</option>
-                <option value="IMPRESSION TOMPOGRAPHIE DEUX COULEURS">Impression Tompographie Deux Couleurs</option>
-            </select>
+            <div class="card-header">
+                <select class="form-control designation-select" name="designations[]" data-designation-id="${designationCounter}" required>
+                    <option value="">Sélectionnez une désignation</option>
+                    <option value="IMPRESSION OFFSET">Impression Offset</option>
+                    <option value="IMPRESSION GRAND FORMAT">Impression Grand Format</option>
+                    <option value="IMPRESSION PETIT FORMAT (NUMÉRIQUE)">Impression Petit Format (Numérique)</option>
+                    <option value="IMPRESSION UV">Impression UV</option>
+                    <option value="DÉCOUPE LASER PETIT ET GRAND FORMAT">Découpe Laser Petit_Grand Format</option>
+                    <option value="DÉCOUPE CNC GRAND FORMAT">Découpe CNC Grand Format</option>
+                    <option value="DÉCOUPE ADHÉSIF">Découpe Adhésif</option>
+                    <option value="IMPRESSION TOMPOGRAPHIE DEUX COULEURS">Impression Tompographie Deux Couleurs</option>
+                </select>
                 <button class="btn btn-danger remove-designation ml-3" type="button">
                     <i class="fas fa-trash-alt"></i>
                 </button>
@@ -159,24 +234,24 @@ function generateCategoryHTML(designation, category, index, designationId) {
 
 function generateImpressionOptions(designationId, index) {
     return `<div class="row">
-                <div class="form-group">
-                    <label for="quantity${designationId}_${index}">Quantité:</label>
+                <div class="form-group col-md-6">
+                    <label for="quantity${designationId}_${index}" class="form-label">Quantité:</label>
                     <input type="number" id="quantity${designationId}_${index}" name="quantities[${designationId}][]" class="form-control">
                 </div>
-                <div class="form-group">
-                    <label for="format${designationId}_${index}">Format:</label>
+                <div class="form-group col-md-6">
+                    <label for="format${designationId}_${index}" class="form-label">Format:</label>
                     <input type="text" id="format${designationId}_${index}" name="formats[${designationId}][]" class="form-control">
                 </div>
-                <div class="form-group">
-                    <label for="paper_type${designationId}_${index}">Type de Papier:</label>
+                <div class="form-group col-md-6">
+                    <label for="paper_type${designationId}_${index}" class="form-label">Type de Papier:</label>
                     <input type="text" id="paper_type${designationId}_${index}" name="paper_types[${designationId}][]" class="form-control">
                 </div>
-                <div class="form-group">
-                    <label for="grammage${designationId}_${index}">Grammage:</label>
+                <div class="form-group col-md-6">
+                    <label for="grammage${designationId}_${index}" class="form-label">Grammage:</label>
                     <input type="text" id="grammage${designationId}_${index}" name="grammages[${designationId}][]" class="form-control">
                 </div>
-                <div class="form-group">
-                    <label for="recto_verso${designationId}_${index}">R/RV:</label>
+                <div class="form-group col-md-6">
+                    <label for="recto_verso${designationId}_${index}" class="form-label">R/RV:</label>
                     <select id="recto_verso${designationId}_${index}" name="recto_versos[${designationId}][]" class="form-control">
                         <option value="R">R</option>
                         <option value="RV">R/V</option>
@@ -189,19 +264,22 @@ function generateFinitionOptions(designationId, index) {
     return `<div class="row">
                 <div class="col-md-6">
                     <div class="form-check">
-                        <input type="checkbox" class="form-check-input" id="pelliculage_mat${designationId}_${index}" name="pelliculage_mat[${designationId}][]">
-                        <label class="form-check-label" for="pelliculage_mat${designationId}_${index}">Pelliculage Mat R</label><br>
-                        <input type="checkbox" class="form-check-input" id="pelliculage_mat${designationId}_${index}" name="pelliculage_mat[${designationId}][]">
-                        <label class="form-check-label" for="pelliculage_mat${designationId}_${index}">Pelliculage Mat R/V</label>
+                        <input type="checkbox" class="form-check-input" id="pelliculage_mat_r${designationId}_${index}" name="pelliculage_mat[${designationId}][]">
+                        <label class="form-check-label" for="pelliculage_mat_r${designationId}_${index}">Pelliculage Mat R</label>
                     </div>
                     <div class="form-check">
-                        <input type="checkbox" class="form-check-input" id="pelliculage_brillant${designationId}_${index}" name="pelliculage_brillant[${designationId}][]">
-                        <label class="form-check-label" for="pelliculage_brillant${designationId}_${index}">Pelliculage Brillant R</label><br>
-                        <input type="checkbox" class="form-check-input" id="pelliculage_brillant${designationId}_${index}" name="pelliculage_brillant[${designationId}][]">
-                        <label class="form-check-label" for="pelliculage_brillant${designationId}_${index}">Pelliculage Brillant R/V</label><br>
-
+                        <input type="checkbox" class="form-check-input" id="pelliculage_mat_rv${designationId}_${index}" name="pelliculage_mat[${designationId}][]">
+                        <label class="form-check-label" for="pelliculage_mat_rv${designationId}_${index}">Pelliculage Mat R/V</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="pelliculage_brillant_r${designationId}_${index}" name="pelliculage_brillant[${designationId}][]">
+                        <label class="form-check-label" for="pelliculage_brillant_r${designationId}_${index}">Pelliculage Brillant R</label>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="pelliculage_brillant_rv${designationId}_${index}" name="pelliculage_brillant[${designationId}][]">
+                        <label class="form-check-label" for="pelliculage_brillant_rv${designationId}_${index}">Pelliculage Brillant R/V</label>
+                    </div>
                 </div>
-            </div>
                 <div class="col-md-6">
                     <div class="form-check">
                         <input type="checkbox" class="form-check-input" id="spiral${designationId}_${index}" name="spiral[${designationId}][]">
@@ -220,21 +298,21 @@ function generateFinitionOptions(designationId, index) {
                         <label class="form-check-label" for="cousu${designationId}_${index}">Cousu</label>
                     </div>
                 </div>
-            </div>`;}
+            </div>`;
+}
 
 function generateGeneralOptions(designationId, index) {
     return `<div class="general-options">
                 <div class="form-group">
-                    <label for="quantity${designationId}_${index}">Quantité:</label>
+                    <label for="quantity${designationId}_${index}" class="form-label">Quantité:</label>
                     <input type="number" id="quantity${designationId}_${index}" name="quantities[${designationId}][]" class="form-control">
                 </div>
                 <div class="form-group">
-                    <label for="designation${designationId}_${index}">Désignation:</label>
+                    <label for="designation${designationId}_${index}" class="form-label">Désignation:</label>
                     <textarea id="designation${designationId}_${index}" name="paragraphs[${designationId}][]" class="form-control"></textarea>
                 </div>
             </div>`;
 }
-
 
 document.addEventListener('change', function(event) {
     if (event.target.classList.contains('option-checkbox')) {

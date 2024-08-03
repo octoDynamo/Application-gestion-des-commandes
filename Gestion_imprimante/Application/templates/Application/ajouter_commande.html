@@ -3,42 +3,95 @@
 {% block title %}Ajouter Commande{% endblock %}
 
 {% block content %}
+<style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f8f9fa;
+    }
+    .custom-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        background-color: #fff;
+        padding: 20px;
+        margin-top: 30px;
+    }
+    .custom-card-body {
+        padding: 30px;
+    }
+    .form-label {
+        font-weight: bold;
+        color: #333;
+    }
+    .form-control {
+        padding: 10px;
+        margin-bottom: 15px;
+    }
+    .btn-primary {
+        background-color: #3498db;
+        border: none;
+        transition: background-color 0.3s ease;
+        padding: 10px 20px;
+        border-radius: 5px;
+    }
+    .btn-primary:hover {
+        background-color: #2980b9;
+    }
+    .btn-secondary {
+        background-color: #7f8c8d;
+        border: none;
+        transition: background-color 0.3s ease;
+        padding: 10px 20px;
+        border-radius: 5px;
+    }
+    .btn-secondary:hover {
+        background-color: #616a6b;
+    }
+    .text-center button, .text-center a {
+        margin: 0 10px;
+    }
+    h1.text-center {
+        font-weight: 700;
+        color: #333;
+        margin-bottom: 20px;
+    }
+</style>
+
 <h1 class="text-center my-4">Ajouter une Nouvelle Commande</h1>
-<div class="card shadow-sm">
-    <div class="card-body">
+<div class="card custom-card">
+    <div class="card-body custom-card-body">
         <form method="post">
             {% csrf_token %}
             <div class="form-row">
                 <div class="form-group col-md-6">
-                    <label for="client_name" class="form-label">Nom_Client</label>
+                    <label for="client_name" class="form-label">Nom du Client</label>
                     <input type="text" class="form-control" id="client_name" name="client_name" required>
                 </div>
                 <div class="form-group col-md-6">
-                    <label for="company_reference_number" class="form-label">Client_Ref</label>
+                    <label for="company_reference_number" class="form-label">Référence du Client</label>
                     <input type="text" class="form-control" id="company_reference_number" name="company_reference_number" required>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group col-md-6">
-                    <label for="adresse">Adresse</label>
+                    <label for="adresse" class="form-label">Adresse</label>
                     <input type="text" class="form-control" id="adresse" name="adresse">
-                 </div>
-                 <div class="form-group col-md-6">
-                    <label for="email">Email</label>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="email" class="form-label">Email</label>
                     <input type="email" class="form-control" id="email" name="email">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group col-md-4">
-                    <label for="fax">Fax</label>
+                    <label for="fax" class="form-label">Fax</label>
                     <input type="text" class="form-control" id="fax" name="fax">
                 </div>
                 <div class="form-group col-md-4">
-                    <label for="ice">ICE</label>
+                    <label for="ice" class="form-label">ICE</label>
                     <input type="text" class="form-control" id="ice" name="ice">
                 </div>
                 <div class="form-group col-md-4">
-                    <label for="infographiste">Infographiste</label>
+                    <label for="infographiste" class="form-label">Infographiste</label>
                     <input type="text" class="form-control" id="infographiste" name="infographiste">
                 </div>
             </div>
@@ -53,7 +106,6 @@
             </div>
         </form>
     </div>
-</div>
 </div>
 
 {% endblock %}

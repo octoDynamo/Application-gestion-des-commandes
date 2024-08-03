@@ -3,13 +3,75 @@
 {% block title %}Supprimer Facture{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f8f9fa;
+    }
+    .container {
+        margin-top: 40px;
+        background-color: #fff;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+        margin: 40px auto;
+    }
+    h1 {
+        color: #e74c3c;
+        margin-bottom: 20px;
+        font-size: 24px;
+        text-align: center;
+        font-weight: 700;
+    }
+    p {
+        font-size: 18px;
+        margin-bottom: 20px;
+        text-align: center;
+        color: #333;
+    }
+    .btn-danger {
+        background-color: #e74c3c;
+        border: none;
+        transition: background-color 0.3s ease;
+        padding: 10px 20px;
+        border-radius: 5px;
+        color: #fff;
+        font-weight: 700;
+    }
+    .btn-danger:hover {
+        background-color: #c0392b;
+    }
+    .btn-secondary {
+        background-color: #7f8c8d;
+        border: none;
+        transition: background-color 0.3s ease;
+        padding: 10px 20px;
+        border-radius: 5px;
+        color: #fff;
+        font-weight: 700;
+    }
+    .btn-secondary:hover {
+        background-color: #616a6b;
+    }
+    .text-center {
+        margin-top: 20px;
+    }
+</style>
+
+<div class="container">
     <h1>Confirmation de suppression</h1>
     <p>Êtes-vous sûr de vouloir supprimer la facture N° {{ facture.facture_numero }} ?</p>
     <form method="post">
         {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Supprimer</button>
-        <a href="{% url 'liste_factures' %}" class="btn btn-secondary">Annuler</a>
+        <div class="text-center">
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash-alt"></i> Supprimer
+            </button>
+            <a href="{% url 'liste_factures' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Annuler
+            </a>
+        </div>
     </form>
 </div>
 {% endblock %}

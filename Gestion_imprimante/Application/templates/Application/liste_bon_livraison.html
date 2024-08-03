@@ -1,66 +1,147 @@
 {% extends "base.html" %}
 
-{% block title %}Liste bon_livraison{% endblock %}
+{% block title %}Liste Bon de Livraison{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1>Liste bon_livraisons</h1>
-    <table class="table table-striped" id="factureTable">
-        <thead>
-            <tr>
-            <th>Num_Dossier</th>
-            <th>Bon_livraison N°</th>
-            <th>Client</th>
-            <th>Client_Ref</th>
-            <th>Status</th>
-            <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for bon_livraison in bon_livraison %}
-                <tr>
-                    <td>{{ bon_livraison.order_id }}</td>
-                    <td>{{ bon_livraison.bl_numero }}</td>
-                    <td>{{ bon_livraison.client_name }}</td>
-                    <td>{{ bon_livraison.company_reference_number }}</td>
-                    <td><form method="post" action="{% url 'update_bl_status' bon_livraison.pk %}">
-                        {% csrf_token %}
-                        {% if bon_livraison.bl_status == 'bl_termine' %}
-                            bon_livraison Terminé
-                        {% else %}
-                                Pas de bon_livraison
-                        {% endif %}
-                    </form></td>
-                    <td>
-                    <a href="{% url 'generer_bon_livraison' bon_livraison.pk %}" class="btn btn-sm btn-secondary"><i class="fas fa-file-invoice"></i></a>
-                    <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteModal{{ bon_livraison.pk }}"><i class="fas fa-trash"></i></button>
+<style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f8f9fa;
+    }
+    .custom-table {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    .custom-table th, .custom-table td {
+        padding: 12px 15px;
+        text-align: center;
+    }
+    .custom-table th {
+        background-color: #3498db;
+        color: #fff;
+        font-weight: bold;
+        border: none;
+    }
+    .custom-table tbody tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+    .custom-table tbody tr:hover {
+        background-color: #e6f7ff;
+    }
+    .modal-header, .modal-footer {
+        background-color: #f8f9fa;
+        border: none;
+    }
+    .modal-title {
+        color: #333;
+    }
+    .btn-custom {
+        background-color: #3498db;
+        color: #fff;
+        border: none;
+        transition: background-color 0.3s ease;
+        border-radius: 5px;
+        padding: 5px 10px;
+    }
+    .btn-custom:hover {
+        background-color: #2980b9;
+    }
+    .btn-danger {
+        border-radius: 5px;
+        padding: 5px 10px;
+    }
+    .btn-secondary-custom {
+        background-color: #7f8c8d;
+        color: #fff;
+        border: none;
+        transition: background-color 0.3s ease;
+        border-radius: 5px;
+        padding: 5px 10px;
+    }
+    .btn-secondary-custom:hover {
+        background-color: #616a6b;
+    }
+    .modal-content {
+        border-radius: 10px;
+    }
+    .table-responsive {
+        border-radius: 10px;
+    }
+    h1 {
+        font-family: 'Roboto', sans-serif;
+        color: #333;
+        font-weight: 700;
+    }
+</style>
 
-                        <!-- Modal -->
-                        <div id="deleteModal{{ bon_livraison.pk }}" class="modal fade" role="dialog">
-                            <div class="modal-dialog">
-                                <!-- Modal content-->
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h4 class="modal-title">Confirmation de suppression</h4>
-                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <p>Êtes-vous sûr de vouloir supprimer ce bon_livraison?</p>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <form method="post" action="{% url 'supprimer_bl' bon_livraison.pk %}">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-danger">Supprimer</button>
-                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
-                                        </form>
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Liste Bon de Livraisons</h1>
+    <div class="table-responsive custom-table">
+        <table class="table table-striped" id="factureTable">
+            <thead>
+                <tr>
+                    <th>Numéro Dossier</th>
+                    <th>Bon de Livraison N°</th>
+                    <th>Client</th>
+                    <th>Référence Client</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bon_livraison in bon_livraison %}
+                    <tr>
+                        <td>{{ bon_livraison.order_id }}</td>
+                        <td>{{ bon_livraison.bl_numero }}</td>
+                        <td>{{ bon_livraison.client_name }}</td>
+                        <td>{{ bon_livraison.company_reference_number }}</td>
+                        <td>
+                            <form method="post" action="{% url 'update_bl_status' bon_livraison.pk %}">
+                                {% csrf_token %}
+                                {% if bon_livraison.bl_status == 'bl_termine' %}
+                                    Bon de Livraison Terminé
+                                {% else %}
+                                    Pas de Bon de Livraison
+                                {% endif %}
+                            </form>
+                        </td>
+                        <td>
+                            <a href="{% url 'generer_bon_livraison' bon_livraison.pk %}" class="btn btn-sm btn-custom">
+                                <i class="fas fa-file-invoice"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-danger" data-toggle="modal" data-target="#deleteModal{{ bon_livraison.pk }}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+
+                            <!-- Modal -->
+                            <div id="deleteModal{{ bon_livraison.pk }}" class="modal fade" role="dialog">
+                                <div class="modal-dialog">
+                                    <!-- Modal content-->
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title">Confirmation de Suppression</h4>
+                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Êtes-vous sûr de vouloir supprimer ce bon de livraison?</p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <form method="post" action="{% url 'supprimer_bl' bon_livraison.pk %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                <button type="button" class="btn btn-secondary-custom" data-dismiss="modal">Annuler</button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </td>
-            {% endfor %}
-        </tbody>
-    </table>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
-

@@ -2,72 +2,142 @@
 {% load static %}
 
 {% block content %}
+<style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f5f5f5;
+    }
+    .custom-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .custom-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    .custom-card-body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    .custom-card-footer {
+        border-top: none;
+        border-radius: 0 0 15px 15px;
+        background-color: #ffffff;
+        text-align: center;
+        padding: 10px;
+    }
+    .custom-container {
+        background: linear-gradient(135deg, #ececec 0%, #ffffff 100%);
+        padding: 50px;
+        border-radius: 15px;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    }
+    .custom-header {
+        font-weight: 700;
+        color: #333;
+    }
+    .custom-subheader {
+        font-weight: 400;
+        color: #666;
+    }
+    .custom-button {
+        background-color: #3498db;
+        color: #ffffff;
+        border: none;
+        transition: background-color 0.3s;
+        padding: 10px 20px;
+        border-radius: 30px;
+    }
+    .custom-button:hover {
+        background-color: #2980b9;
+    }
+    .custom-icon {
+        color: #ffffff;
+        margin-bottom: 10px;
+    }
+    .custom-card-title {
+        color: #ffffff;
+        margin-bottom: 0;
+    }
+</style>
 
-<div class="container-fluid p-5 bg-light text-dark" style="background-color: #f5f5f5;">
+<div class="d-flex justify-content-end mb-4">
+    <a href="{% url 'logout' %}" class="btn btn-danger">
+        <i class="fas fa-sign-out-alt"></i>
+    </a>
+</div>
+
+<div class="container-fluid custom-container text-dark">
     <div class="row align-items-center">
         <div class="col-md-8">
-            <h1 class="display-4 animate__animated animate__fadeInLeft" style="font-family: 'Roboto', sans-serif;">Bienvenue, Monsieur</h1>
-            <p class="lead animate__animated animate__fadeInLeft animate__delay-1s" style="font-family: 'Roboto', sans-serif;">Ready to start your day</p>
+            <h1 class="display-4 animate__animated animate__fadeInLeft custom-header">Bienvenue, Monsieur</h1>
+            <p class="lead animate__animated animate__fadeInLeft animate__delay-1s custom-subheader">Prêt à commencer votre journée</p>
         </div>
         <div class="col-md-4 text-center">
             <img src="{% static 'Application/images/director-icon.png' %}" alt="Director Icon" class="img-fluid animate__animated animate__fadeInRight">
         </div>
     </div>
 </div>
+
 <div class="container mt-4">
     <div class="row justify-content-center mt-4">
         <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
-            <div class="card text-white h-100" style="background-color: #3498db;">
-                <div class="card-body text-center">
-                    <i class="fas fa-list fa-2x"></i>
-                    <h5 class="card-title mt-2" style="font-family: 'Roboto', sans-serif;">Commandes</h5>
+            <div class="card custom-card text-white h-100" style="background-color: #3498db;">
+                <div class="card-body custom-card-body">
+                    <i class="fas fa-list fa-2x custom-icon"></i>
+                    <h5 class="card-title custom-card-title">Commandes</h5>
                 </div>
-                <div class="card-footer">
-                    <a href="{% url 'liste_commandes' %}" class="btn btn-light btn-block">GO</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
-            <div class="card text-white h-100" style="background-color: #1abc9c;">
-                <div class="card-body text-center">
-                    <i class="fas fa-file-alt fa-2x"></i>
-                    <h5 class="card-title mt-2" style="font-family: 'Roboto', sans-serif;">Devis</h5>
-                </div>
-                <div class="card-footer">
-                    <a href="{% url 'liste_devis' %}" class="btn btn-light btn-block">GO</a>
+                <div class="card-footer custom-card-footer">
+                    <a href="{% url 'liste_commandes' %}" class="btn custom-button">GO</a>
                 </div>
             </div>
         </div>
         <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
-            <div class="card text-white h-100" style="background-color: #e74c3c;">
-                <div class="card-body text-center">
-                    <i class="fas fa-file-invoice-dollar fa-2x"></i>
-                    <h5 class="card-title mt-2" style="font-family: 'Roboto', sans-serif;">Factures</h5>
+            <div class="card custom-card text-white h-100" style="background-color: #1abc9c;">
+                <div class="card-body custom-card-body">
+                    <i class="fas fa-file-alt fa-2x custom-icon"></i>
+                    <h5 class="card-title custom-card-title">Devis</h5>
                 </div>
-                <div class="card-footer">
-                    <a href="{% url 'liste_factures' %}" class="btn btn-light btn-block">GO</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
-            <div class="card text-white h-100" style="background-color: #f39c12;">
-                <div class="card-body text-center">
-                    <i class="fas fa-truck fa-2x"></i>
-                    <h5 class="card-title mt-2" style="font-family: 'Roboto', sans-serif;">Bon de Livraison</h5>
-                </div>
-                <div class="card-footer">
-                    <a href="{% url 'liste_bon_livraison' %}" class="btn btn-light btn-block">GO</a>
+                <div class="card-footer custom-card-footer">
+                    <a href="{% url 'liste_devis' %}" class="btn custom-button">GO</a>
                 </div>
             </div>
         </div>
         <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
-            <div class="card text-white h-100" style="background-color: #9b59b6;">
-                <div class="card-body text-center">
-                    <i class="fas fa-users fa-2x"></i>
-                    <h5 class="card-title mt-2" style="font-family: 'Roboto', sans-serif;">Situation Client</h5>
+            <div class="card custom-card text-white h-100" style="background-color: #e74c3c;">
+                <div class="card-body custom-card-body">
+                    <i class="fas fa-file-invoice-dollar fa-2x custom-icon"></i>
+                    <h5 class="card-title custom-card-title">Factures</h5>
                 </div>
-                <div class="card-footer">
-                    <a href="{% url 'situation_client' %}" class="btn btn-light btn-block">GO</a>
+                <div class="card-footer custom-card-footer">
+                    <a href="{% url 'liste_factures' %}" class="btn custom-button">GO</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
+            <div class="card custom-card text-white h-100" style="background-color: #f39c12;">
+                <div class="card-body custom-card-body">
+                    <i class="fas fa-truck fa-2x custom-icon"></i>
+                    <h5 class="card-title custom-card-title">Bon de Livraison</h5>
+                </div>
+                <div class="card-footer custom-card-footer">
+                    <a href="{% url 'liste_bon_livraison' %}" class="btn custom-button">GO</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 col-sm-6 mb-4">
+            <div class="card custom-card text-white h-100" style="background-color: #9b59b6;">
+                <div class="card-body custom-card-body">
+                    <i class="fas fa-users fa-2x custom-icon"></i>
+                    <h5 class="card-title custom-card-title">Situation Client</h5>
+                </div>
+                <div class="card-footer custom-card-footer">
+                    <a href="{% url 'situation_client' %}" class="btn custom-button">GO</a>
                 </div>
             </div>
         </div>

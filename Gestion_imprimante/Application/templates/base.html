@@ -7,12 +7,9 @@
     <title>{% block title %}{% endblock %}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
     <style>
         html, body {
             font-family: 'Roboto', sans-serif;
@@ -24,36 +21,38 @@
             background-size: cover;
         }
         .navbar {
-            background-color: rgba(255, 255, 255, 0);
+            background-color: rgba(255, 255, 255, 0.8);
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            animation: glow 1.5s ease-in-out infinite alternate;
-        }
-        @keyframes glow {
-            from {
-                box-shadow: 0 0 10px #bdbcb5;
-            }
-            to {
-                box-shadow: 0 0 20px #4a4947, 0 0 30px #252422;
-            }
         }
         .navbar-nav .nav-item .nav-link .fas {
             font-size: 1.2em;
-            font-weight: bold;
             color: #333;
+            transition: color 0.3s;
         }
-        .navbar-nav .nav-item .nav-link:hover {
+        .navbar-nav .nav-item .nav-link:hover .fas {
             color: #ffe600;
             text-shadow: 0 0 5px rgb(221, 207, 48);
         }
-        
         .container {
-            background: rgba(255, 255, 255, 0.732);
+            background: rgba(255, 255, 255, 0.9);
             padding: 30px;
             border-radius: 15px;
-            align-items: center;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             max-width: 1200px;
             margin: 50px auto;
+            overflow-y: auto; /* Enable vertical scrolling */
+            max-height: 90vh; /* Adjust based on your design */
+        }
+        .form-control, .btn {
+            border-radius: 25px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
         }
         .search-bar {
             display: none;
@@ -63,6 +62,8 @@
             z-index: 1000;
             border: 1px solid #ccc;
             padding: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
         }
         .search-bar.active {
             display: block;
@@ -80,56 +81,41 @@
             padding: 0;
             cursor: pointer;
         }
-        .glow-button {
-            animation: glow 1.5s ease-in-out infinite alternate;
+        .card {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease-in-out;
         }
-        .content {
-            flex: 1;
+        .card:hover {
+            transform: translateY(-5px);
         }
-        .footer-nav {
-            background-color: rgba(255, 255, 255, 0.8);
-            padding: 10px 0;
+        .designation-entry {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
         }
         .table th, .table td {
-        vertical-align: middle;
-    }
-
-    .btn {
-        margin-right: 5px;
-    }
-
-    h1 {
-        font-family: 'Roboto', sans-serif;
-        font-weight: bold;
-        color: #95c135;
-    }
-
-    .card {
-        border: none;
-        border-radius: 15px;
-    }
-
-    .card-body {
-        padding: 20px;
-    }
-
-    .table th, .table td {
-        vertical-align: middle;
-    }
-    .table th {
-        background-color: #343a40;
-        color: #fff;
-    }
-
-    .table-striped tbody tr:nth-of-type(odd) {
-        background-color: rgba(0, 0, 0, 0.05);
-    }
+            vertical-align: middle;
+        }
+        .table th {
+            background-color: #343a40;
+            color: #fff;
+        }
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+        h1 {
+            font-weight: bold;
+            color: #95c135;
+        }
     </style>
+    {% block extra_styles %}{% endblock %}
 </head>
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-light">
-    <a class="navbar-brand glow-button" href="#"></a>
+    <a class="navbar-brand" href="#"></a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
@@ -165,30 +151,27 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script>
      document.addEventListener('DOMContentLoaded', function () {
-            var currentPath = window.location.pathname;
-            var searchForm = document.getElementById('searchForm');
-            var searchInput = searchForm.querySelector('input[name="q"]');
+        var currentPath = window.location.pathname;
+        var searchForm = document.getElementById('searchForm');
+        var searchInput = searchForm.querySelector('input[name="q"]');
 
-            if (currentPath.includes('liste_commandes')) {
-                searchForm.action = "{% url 'liste_commandes' %}";
-            } else if (currentPath.includes('liste_factures')) {
-                searchForm.action = "{% url 'liste_factures' %}";
-            } else if (currentPath.includes('liste_devis')) {
-                searchForm.action = "{% url 'liste_devis' %}";
-            } else if (currentPath.includes('liste_bon_livraison')) {
-                searchForm.action = "{% url 'liste_bon_livraison' %}";
-            }
+        if (currentPath.includes('liste_commandes')) {
+            searchForm.action = "{% url 'liste_commandes' %}";
+        } else if (currentPath.includes('liste_factures')) {
+            searchForm.action = "{% url 'liste_factures' %}";
+        } else if (currentPath.includes('liste_devis')) {
+            searchForm.action = "{% url 'liste_devis' %}";
+        } else if (currentPath.includes('liste_bon_livraison')) {
+            searchForm.action = "{% url 'liste_bon_livraison' %}";
+        }
 
-            document.getElementById('search-toggle').addEventListener('click', function () {
-                document.querySelector('.search-bar').classList.toggle('active');
-            });
+        document.getElementById('search-toggle').addEventListener('click', function () {
+            document.querySelector('.search-bar').classList.toggle('active');
+        });
 
-            document.querySelector('.clear-search').addEventListener('click', function () {
-                searchInput.value = '';
-            });
-
-        // Debugging: Ensure the script runs
-        console.log("JavaScript is working correctly!");
+        document.querySelector('.clear-search').addEventListener('click', function () {
+            searchInput.value = '';
+        });
     });
 </script>
 {% block extra_scripts %}{% endblock %}

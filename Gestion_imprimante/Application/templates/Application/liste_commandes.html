@@ -3,46 +3,116 @@
 {% block title %}Liste des Commandes{% endblock %}
 
 {% block content %}
+<style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f8f9fa;
+    }
+    .custom-table {
+        background-color: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        margin-top: 20px;
+    }
+    .custom-table th, .custom-table td {
+        padding: 12px 15px;
+        text-align: center;
+    }
+    .custom-table th {
+        background-color: #3498db;
+        color: #fff;
+        font-weight: bold;
+        border: none;
+    }
+    .custom-table tbody tr:nth-child(even) {
+        background-color: #f2f2f2;
+    }
+    .custom-table tbody tr:hover {
+        background-color: #e6f7ff;
+    }
+    .btn-custom-warning {
+        background-color: #f39c12;
+        color: #fff;
+        border: none;
+        transition: background-color 0.3s ease;
+        border-radius: 5px;
+        padding: 5px 10px;
+    }
+    .btn-custom-warning:hover {
+        background-color: #e67e22;
+    }
+    .btn-custom-danger {
+        background-color: #e74c3c;
+        color: #fff;
+        border: none;
+        transition: background-color 0.3s ease;
+        border-radius: 5px;
+        padding: 5px 10px;
+    }
+    .btn-custom-danger:hover {
+        background-color: #c0392b;
+    }
+    .header-title {
+        font-family: 'Roboto', sans-serif;
+        color: #333;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+    .table-responsive {
+        border-radius: 10px;
+    }
+    .btn-container {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+</style>
 
-<h1 class="text-center my-4">Liste des Commandes</h1>
-<div class="card shadow-sm">
-    <div class="card-body">
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered">
-            <thead class="thead-dark">
-                <tr>
-                <th>Num_Dossier</th>
-                <th>Client_Ref</th>
-                <th>Nom_Client</th>
-                <th>Date et Heure</th>
-                <th>Statut</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if commandes %}
-            {% for commande in commandes %}
-            <tr>
-                <td>{{ commande.order_id }}</td>
-                <td>{{ commande.company_reference_number }}</td>
-                <td>{{ commande.client_name }}</td>
-                <td>{{ commande.date_time }}</td>
-                <td>{{ commande.order_status }}</td>
-                <td>
-                    <a href="{% url 'modifier_commande' commande.pk %}" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
-                    <a href="{% url 'supprimer_commande' commande.pk %}" class="btn btn-sm btn-danger" onclick="return confirm('Etes vous sure de supprimer cette commande?');"><i class="fas fa-trash"></i></a>
-                </td>
-            </tr>
-            {% endfor %}
-            {% else %}
-                <tr>
-                    <td colspan="6" class="text-center">Aucune commande disponible.</td>
-                </tr>
-            {% endif %}
-        </tbody>
-    </table>
-</div>
-</div>
+<div class="container mt-4">
+    <h1 class="text-center header-title my-4">Liste des Commandes</h1>
+    <div class="card shadow-sm custom-table">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Numéro Dossier</th>
+                            <th>Référence Client</th>
+                            <th>Nom Client</th>
+                            <th>Date et Heure</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if commandes %}
+                            {% for commande in commandes %}
+                                <tr>
+                                    <td>{{ commande.order_id }}</td>
+                                    <td>{{ commande.company_reference_number }}</td>
+                                    <td>{{ commande.client_name }}</td>
+                                    <td>{{ commande.date_time }}</td>
+                                    <td>{{ commande.order_status }}</td>
+                                    <td>
+                                        <div class="btn-container">
+                                            <a href="{% url 'modifier_commande' commande.pk %}" class="btn btn-sm btn-custom-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'supprimer_commande' commande.pk %}" class="btn btn-sm btn-custom-danger" onclick="return confirm('Etes-vous sûr de vouloir supprimer cette commande?');">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center">Aucune commande disponible.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+        </div>
+    
 </div>
 
 {% endblock %}
