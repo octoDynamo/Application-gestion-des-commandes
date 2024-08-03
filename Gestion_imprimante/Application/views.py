@@ -115,29 +115,31 @@ logger = logging.getLogger(__name__)
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def generer_situation_client(request):
-    form = SituationClientForm()
+    client_ref = request.GET.get('client_ref')
+    factures = Commande.objects.filter(company_reference_number=client_ref, facture_status='facture_termine', remarque='non payé')
+
     if request.method == 'POST':
-        form = SituationClientForm(request.POST)
-        if form.is_valid():
-            client_ref = form.cleaned_data['client_ref']
-            factures = Commande.objects.filter(company_reference_number=client_ref, order_status='completed', remarque='non_paye')
-            html_string = render_to_string('Application/situation_client_template.html', {'factures': factures, 'client_ref': client_ref})
-            html = HTML(string=html_string)
-            pdf = html.write_pdf()
+        html_string = render_to_string('Application/situation_client_template.html', {'factures': factures, 'client_ref': client_ref})
+        html = HTML(string=html_string)
+        pdf = html.write_pdf()
 
-            response = HttpResponse(pdf, content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="situation_client_{client_ref}.pdf"'
+        response = HttpResponse(pdf, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="situation_client_{client_ref}.pdf"'
 
-            pdf_path = os.path.join(settings.MEDIA_ROOT, f"situation_client_{client_ref}.pdf")
-            with open(pdf_path, 'wb') as f:
-                f.write(pdf)
+        pdf_path = os.path.join(settings.MEDIA_ROOT, f"situation_client_{client_ref}.pdf")
+        with open(pdf_path, 'wb') as f:
+            f.write(pdf)
 
-            if os.name == 'nt':
-                os.startfile(pdf_path)
+        if os.name == 'nt':
+            os.startfile(pdf_path)
 
-            return redirect('liste_commandes')
+        return response
 
-    return render(request, 'Application/generer_situation_client.html', {'form': form})
+    context = {
+        'factures': factures,
+        'client_ref': client_ref,
+    }
+    return render(request, 'Application/generer_situation_client.html', context)
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())

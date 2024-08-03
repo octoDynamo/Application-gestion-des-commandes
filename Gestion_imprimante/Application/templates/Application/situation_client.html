@@ -99,5 +99,10 @@
             </tbody>
         </table>
     </div>
+    {% if factures %}
+        <div class="text-center mt-4">
+            <a href="{% url 'generer_situation_client' %}?client_ref={{ query }}" class="btn btn-primary">Générer Situation</a>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}
