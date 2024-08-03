@@ -29,28 +29,28 @@
     <div class="header">
         <h1>Situation Client</h1>
         <p>Référence Client: {{ client_ref }}</p>
+        <p>Date: {{ date }}</p>
     </div>
     <table>
         <thead>
             <tr>
                 <th>Numéro de Commande</th>
-                <th>Référence Client</th>
-                <th>Nom du Client</th>
-                <th>Date et Heure</th>
-                <th>Statut</th>
+                <th>Numéro de Facture</th>
+                <th>Total TTC</th>
             </tr>
         </thead>
         <tbody>
             {% for facture in factures %}
             <tr>
                 <td>{{ facture.order_id }}</td>
-                <td>{{ facture.company_reference_number }}</td>
-                <td>{{ facture.client_name }}</td>
-                <td>{{ facture.date_time }}</td>
-                <td>{{ facture.order_status }}</td>
+                <td>{{ facture.facture_numero }}</td>
+                <td>{{ facture.total_ttc }}</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+    <div>
+        <img src="{{ image_url }}" alt="Devis Image" style="width:100%;">
+    </div>
 </body>
 </html>

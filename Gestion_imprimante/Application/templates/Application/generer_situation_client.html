@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Générer Situation Client{% endblock %}
+{% block title %}Générer Situation Client pour {{ client_ref }}{% endblock %}
 
 {% block content %}
 <div class="container">
@@ -21,7 +21,7 @@
                     <tr>
                         <td>{{ facture.order_id }}</td>
                         <td>{{ facture.facture_numero }}</td>
-                        <td>{{ facture.options_data.total_ttc }}</td>
+                        <td>{{ facture.total_ttc }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

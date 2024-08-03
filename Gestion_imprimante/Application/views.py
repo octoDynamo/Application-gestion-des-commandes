@@ -118,29 +118,40 @@ def generer_situation_client(request):
     client_ref = request.GET.get('client_ref')
     factures = Commande.objects.filter(company_reference_number=client_ref, facture_status='facture_termine', remarque='non payé')
 
+    # Fetch total_ttc for each facture from the Option table
+    for facture in factures:
+        options = Option.objects.filter(designation__commande=facture)
+        facture.total_ttc = sum(option.total_ttc for option in options)
+        print(f"Commande ID: {facture.order_id}, Total TTC: {facture.total_ttc}")  # Debugging print statement
+
     if request.method == 'POST':
-        html_string = render_to_string('Application/situation_client_template.html', {'factures': factures, 'client_ref': client_ref})
+        html_string = render_to_string('Application/situation_client_template.html', {
+            'factures': factures,
+            'client_ref': client_ref,
+            'image_url': request.build_absolute_uri(static('Application/images/devis.jpg'))
+        })
         html = HTML(string=html_string)
         pdf = html.write_pdf()
 
         response = HttpResponse(pdf, content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="situation_client_{client_ref}.pdf"'
 
+        # Save the PDF to a file and serve it
         pdf_path = os.path.join(settings.MEDIA_ROOT, f"situation_client_{client_ref}.pdf")
         with open(pdf_path, 'wb') as f:
             f.write(pdf)
 
+        # Automatically open the PDF on Windows
         if os.name == 'nt':
             os.startfile(pdf_path)
 
-        return response
+        return redirect('situation_client')
 
     context = {
         'factures': factures,
         'client_ref': client_ref,
     }
     return render(request, 'Application/generer_situation_client.html', context)
-
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def situation_client(request):
