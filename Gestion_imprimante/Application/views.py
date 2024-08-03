@@ -239,14 +239,12 @@ def generer_devis(request, pk):
         unit_prices = request.POST.getlist('unit_price[]')
         total_prices = []
 
-        # Automatically assign a facture number if not already assigned
-        if not commande.facture_numero:
-            last_facture = Commande.objects.exclude(facture_numero=None).order_by('-facture_numero').first()
-            if last_facture:
-                commande.facture_numero = last_facture.facture_numero + 1
+        if not commande.devis_numero:
+            last_devis = Commande.objects.exclude(devis_numero=None).order_by('-devis_numero').first()
+            if last_devis:
+                commande.devis_numero = last_devis.devis_numero+1
             else:
-                commande.facture_numero = 1
-
+                commande.devis_numero=1
 
 
         for idx, option in enumerate(Option.objects.filter(designation__commande=commande)):
@@ -489,22 +487,22 @@ def update_facture_status(request, pk):
 def generer_bon_livraison(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     date = datetime.now().strftime('%B %d, %Y')
+    selected_commandes =[]
 
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
 
-        # Automatically assign a facture number if not already assigned
-        if not commande.facture_numero:
-            last_facture = Commande.objects.exclude(facture_numero=None).order_by('-facture_numero').first()
-            if last_facture:
-                commande.facture_numero = last_facture.facture_numero + 1
-            else:
-                commande.facture_numero = 1
+        selected_commandes_ids = request.POST.getlist('selected_commandes')
+        if selected_commandes_ids:
+            selected_commandes = Commande.objects.filter(order_id__in=selected_commandes_ids)
 
-
-
-        commande.bl_status = 'bl_termine'
-        commande.save()
+        # Automatically assign a BL number if not already assigned
+        if not commande.bl_numero:
+            last_bl = Commande.objects.exclude(bl_numero=None).order_by('-bl_numero').first()
+            new_bl_numero = last_bl.bl_numero + 1 if last_bl else 1
+            commande.bl_numero = new_bl_numero
+            commande.bl_status = 'bl_termine'
+            commande.save()
 
         # Generate the PDF using WeasyPrint
         html_string = render_to_string('Application/bon_livraison_template.html', {
@@ -529,7 +527,8 @@ def generer_bon_livraison(request, pk):
         return redirect('liste_bon_livraison')
 
     return render(request, 'Application/generer_bon_livraison.html', {
-        'commande': commande
+        'commande': commande,
+        'selected_commandes': selected_commandes   
     })
 
 login_required
