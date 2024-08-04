@@ -8,10 +8,10 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.template.loader import render_to_string
-from .models import Commande, CommandeLog, Designation, Option, Facture, Devis, BonLivraison
+from .models import Commande, Designation, LogEntry, Option, Facture, Devis, BonLivraison
 from .forms import CommandeForm
 from django.db.models import Q
-from django.contrib import messages
+from django.contrib import messages 
 from weasyprint import HTML, CSS
 from decimal import Decimal
 from django.templatetags.static import static
@@ -33,8 +33,15 @@ def login_view(request):
             return render(request, 'Application/login.html')
     return render(request, 'Application/login.html')
 
-def log_action(user, action, commande):
-    CommandeLog.objects.create(user=user, action=action, commande=commande)
+def log_action(user, action, commande=None, facture=None, devis=None, bon_livraison=None):
+    LogEntry.objects.create(
+        user=user,
+        action=action,
+        commande=commande,
+        facture=facture,
+        devis=devis,
+        bon_livraison=bon_livraison
+    )
 
 @login_required
 def dashboard(request):
@@ -548,12 +555,15 @@ def update_bl_status(request, pk):
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def log_view(request):
-    logs = CommandeLog.objects.all().order_by('-timestamp')
-    return render(request, 'Application/log_view.html', {'logs': logs})
+    logs = LogEntry.objects.all().order_by('-timestamp')
+    context = {
+        'logs': logs
+    }
+    return render(request, 'Application/log_view.html', context)
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def clear_log(request):
     if request.method == 'POST':
-        CommandeLog.objects.all().delete()
+        LogEntry.objects.all().delete()
     return redirect('log_view')

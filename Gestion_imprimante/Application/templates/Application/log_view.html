@@ -1,4 +1,4 @@
-{% extends "base_no_nav.html" %}
+{% extends "base.html" %}
 
 {% block title %}Log des Commandes{% endblock %}
 
@@ -73,7 +73,8 @@
             <tr>
                 <th>Utilisateur</th>
                 <th>Action</th>
-                <th>Commande</th>
+                <th>Type</th>
+                <th>Identifiant</th>
                 <th>Date et Heure</th>
             </tr>
         </thead>
@@ -82,7 +83,12 @@
             <tr>
                 <td>{{ log.user.username }}</td>
                 <td>{{ log.get_action_display }}</td>
-                <td>{% if log.commande %}{{ log.commande.order_id }}{% else %}Deleted{% endif %}</td>
+                <td>
+                    {% if log.commande %}Commande{% elif log.facture %}Facture{% elif log.devis %}Devis{% elif log.bon_livraison %}Bon de Livraison{% else %}N/A{% endif %}
+                </td>
+                <td>
+                    {% if log.commande %}{{ log.commande.order_id }}{% elif log.facture %}{{ log.facture.facture_id }}{% elif log.devis %}{{ log.devis.devis_id }}{% elif log.bon_livraison %}{{ log.bon_livraison.bl_id }}{% else %}Deleted{% endif %}
+                </td>
                 <td>{{ log.timestamp }}</td>
             </tr>
             {% endfor %}
