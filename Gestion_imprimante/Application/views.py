@@ -322,7 +322,9 @@ def generer_devis(request, pk):
             'total_ht': total_ht,
             'tva_20': tva_20,
             'total_ttc': total_ttc,
-            'image_url': request.build_absolute_uri(static('Application/images/devis.jpg'))
+            'background_image_url': request.build_absolute_uri(static('images/devis.png'))
+            #'header_image_url': request.build_absolute_uri(static('images/Asset 2.png')),
+            #'footer_image_url': request.build_absolute_uri(static('images/Asset 5.png')),
         })
         html = HTML(string=html_string)
         pdf = html.write_pdf()

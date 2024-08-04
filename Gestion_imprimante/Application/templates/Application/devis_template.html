@@ -6,26 +6,29 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        body {
-            font-family:system-ui;
+         @page {
+            size: A4;
             margin: 0;
-            padding: 0;
-            background: url("{{ image_url }}") no-repeat center center;
-            background-size: cover;
         }
-        h2 {
+        body {
             margin: 0;
             padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background: url("{{ background_image_url }}") no-repeat center center;
+            background-size: cover;
+            height: 100vh;
         }
         .container {
             margin: 0 auto;
-            padding: 300px 40px 200px;;
+            padding: 5cm 40px 3cm; /* Adjusted padding: 5 cm top, 3 cm bottom */
             max-width: 800px;
+            box-sizing: border-box;
         }
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 2cm; /* Add margin bottom for spacing */
         }
         .header-left {
             width: 70%;
@@ -37,21 +40,23 @@
         .separator {
             margin: 10px 0;
             border-bottom: 2px solid black;
+            width: 50%;
+            float: left;
         }
         h1 {
             text-align: center;
             margin-bottom: 20px;
         }
         .info {
-            margin-bottom: 20px;
+            margin-bottom: 2cm; /* Add margin bottom for spacing */
         }
-        .info .client-info {
-            margin-top: 20px;
+        .info p {
+            margin: 5px 0;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin: 0 auto; /* Center the table */
         }
         table, th, td {
             border: 1px solid black;
@@ -61,7 +66,7 @@
             text-align: left;
         }
         th {
-            background-color: #f2f2f200;
+            background-color: #f2f2f2;
         }
         .total {
             font-weight: bold;
@@ -75,7 +80,7 @@
     <div class="container">
         <div class="header">
             <div class="header-left">
-                <p>DEVIS N° {{ commande.order_id }}/YEAR</p>
+                <p>Devis N°{{ commande.devis_numero }}/{{ date|date:"Y" }}</p>
             </div>
             <div class="header-right">
                 <p>Rabat, le {{ date }}</p>
@@ -83,8 +88,8 @@
         </div>
         <div class="separator"></div>
         <div class="info">
-            <p><strong>Nom_Client :</strong> {{ commande.client_name }}</p>
-            <p><strong>ICE :</strong> {{ commande.ice }}</p>
+            <p>{{ commande.client_name }}</p>
+            <p>{{ commande.ice }}</p>
         </div>
 
         <table>
@@ -140,6 +145,7 @@
                 </tr>
             </tbody>
         </table>
-    </div>
+</div>
+
 </body>
 </html>

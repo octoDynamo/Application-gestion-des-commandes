@@ -118,9 +118,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "Gestion_imprimante/Application/static"),
-]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+BASE_DIR / "static",
+    "C:/Users/HP/Documents/GitHub/Application-gestion-des-commandes/Gestion_imprimante/Gestion_imprimante/Application/static",
+    "C:/Users/HP/Documents/GitHub/Application-gestion-des-commandes/Gestion_imprimante/static",
+
+    ]
+STATIC_ROOT = BASE_DIR / "staticfiles"
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'
 LOGOUT_REDIRECT_URL = 'login'
