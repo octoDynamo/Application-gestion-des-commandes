@@ -121,16 +121,20 @@ class Prix(models.Model):
     def __str__(self):
         return f"Prix for {self.option.option_name} - {self.unit_price}"
 
-class CommandeLog(models.Model):
+class LogEntry(models.Model):
     ACTION_CHOICES = [
-        ('add', 'Add'),
-        ('modify', 'Modify'),
-        ('delete', 'Delete'),
+        ('add', 'Addition'),
+        ('mod', 'Modification'),
+        ('del', 'Cancellation'),
     ]
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    action = models.CharField(max_length=10, choices=ACTION_CHOICES)
-    commande = models.ForeignKey(Commande, null=True, on_delete=models.SET_NULL)
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='custom_log_entries')
+    action = models.CharField(max_length=3, choices=ACTION_CHOICES)
+    commande = models.ForeignKey('Commande', null=True, blank=True, on_delete=models.SET_NULL, related_name='log_entries')
+    facture = models.ForeignKey('Facture', null=True, blank=True, on_delete=models.SET_NULL, related_name='log_entries')
+    devis = models.ForeignKey('Devis', null=True, blank=True, on_delete=models.SET_NULL, related_name='log_entries')
+    bon_livraison = models.ForeignKey('BonLivraison', null=True, blank=True, on_delete=models.SET_NULL, related_name='log_entries')
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user} {self.action} {self.commande} at {self.timestamp}"
+        return f"{self.user.username} - {self.get_action_display()} - {self.timestamp}"
