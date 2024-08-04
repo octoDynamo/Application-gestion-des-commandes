@@ -129,6 +129,7 @@
             <thead>
                 <tr>
                     <th>N° Dossier</th>
+                    <th>N° Facture</th>
                     <th>Réf_Client</th>
                     <th>Nom_Client</th>
                     <th>Date</th>
@@ -139,6 +140,7 @@
                     {% for facture in factures %}
                     <tr>
                         <td>{{ facture.order_id }}</td>
+                        <td>{{ facture.facture_numero }}</td>
                         <td>{{ facture.company_reference_number }}</td>
                         <td>{{ facture.client_name }}</td>
                         <td>{{ facture.facture_date|date:"d/m/Y" }}</td>

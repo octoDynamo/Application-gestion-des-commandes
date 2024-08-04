@@ -118,6 +118,7 @@ logger = logging.getLogger(__name__)
 def generer_situation_client(request):
     client_ref = request.GET.get('client_ref')
     factures = Commande.objects.filter(company_reference_number=client_ref, facture_status='facture_termine', remarque='non payé')
+    client_name = factures.first().client_name if factures.exists() else "Client"
 
     # Fetch total_ttc for each facture from the Option table
     for facture in factures:
@@ -126,8 +127,12 @@ def generer_situation_client(request):
         print(f"Commande ID: {facture.order_id}, Total TTC: {facture.total_ttc}")  # Debugging print statement
 
     if request.method == 'POST':
+        if request.method == 'POST':
+            selected_factures_ids = request.POST.getlist('facture_ids')
+            selected_factures = factures.filter(order_id__in=selected_factures_ids)
+        
         html_string = render_to_string('Application/situation_client_template.html', {
-            'factures': factures,
+            'factures': selected_factures,
             'client_ref': client_ref,
             'image_url': request.build_absolute_uri(static('Application/images/devis.jpg'))
         })
@@ -151,6 +156,8 @@ def generer_situation_client(request):
     context = {
         'factures': factures,
         'client_ref': client_ref,
+        'client_name': client_name,
+
     }
     return render(request, 'Application/generer_situation_client.html', context)
 

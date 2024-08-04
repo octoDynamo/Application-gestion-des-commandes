@@ -19,16 +19,28 @@ class Commande(models.Model):
     ])
     bc_number = models.CharField(max_length=50, blank=True, null=True)
     date_bc = models.DateField(blank=True, null=True)
-    devis_status = models.CharField(max_length=50, default='pas de devis')
     devis_date = models.DateTimeField(blank=True, null=True)
     devis_numero = models.IntegerField(null=True, blank=True)
-    facture_status = models.CharField(max_length=50, default='pas de facture')
     facture_date = models.DateTimeField(blank=True, null=True)
     facture_numero = models.IntegerField(null=True, blank=True)
-    bl_status = models.CharField(max_length=50, default='pas de bon_livraison')
     bl_date = models.DateTimeField(blank=True, null=True)
     bl_numero = models.IntegerField(null=True, blank=True)
-
+    remarque = models.CharField(max_length=50, choices=[
+        ('paye', 'Payé'),
+        ('non_paye', 'Non Payé')
+    ], default='non payé')
+    facture_status = models.CharField(max_length=50, choices=[
+            ('no_facture', 'Pas de Facture'),
+            ('facture_termine', 'Facture Terminée')
+        ], default='pas de facture')
+    bl_status = models.CharField(max_length=50, choices=[
+            ('no_bl', 'Pas de bon_livraison'),
+            ('bl_termine', 'bon_livraison Terminé')
+        ], default='pas de bon_livraison')
+    devis_status = models.CharField(max_length=50, choices=[
+            ('no_devis', 'Pas de Devis'),
+            ('devis_termine', 'Devis Terminé')
+        ], default='pas de devis')
     def __str__(self):
         return f"Commande {self.order_id}: {self.client_name}"
 
