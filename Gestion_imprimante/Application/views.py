@@ -8,7 +8,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.template.loader import render_to_string
-from .models import Commande, CommandeLog, Designation, Option
+from .models import Commande, CommandeLog, Designation, Option, Facture, Devis, BonLivraison
 from .forms import CommandeForm
 from django.db.models import Q
 from django.contrib import messages
@@ -64,17 +64,18 @@ def liste_commandes(request):
 def liste_devis(request):
     query = request.GET.get('q')
     if query:
-        devis = Commande.objects.filter(
+        commandes = Commande.objects.filter(
             Q(order_status='completed') & (
-            Q(company_reference_number__icontains=query) |
-            Q(client_name__icontains=query) |
-            Q(devis_numero__icontains=query)
+                Q(company_reference_number__icontains=query) |
+                Q(client_name__icontains=query) |
+                Q(devis_numero__icontains=query)
             )
         )
     else:
-        devis = Commande.objects.filter(order_status='completed').order_by('-date_time')
+        commandes = Commande.objects.filter(order_status='completed').order_by('-date_time')
+    
     is_assistant = request.user.groups.filter(name='Assistants').exists()
-    return render(request, 'Application/liste_devis.html', {'devis': devis, 'is_assistant': is_assistant})
+    return render(request, 'Application/liste_devis.html', {'devis_list': commandes, 'is_assistant': is_assistant})
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
@@ -152,6 +153,7 @@ def generer_situation_client(request):
         'client_ref': client_ref,
     }
     return render(request, 'Application/generer_situation_client.html', context)
+
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def situation_client(request):
@@ -200,7 +202,13 @@ def supprimer_commande(request, pk):
 def supprimer_facture(request, pk):
     facture = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
-        facture.delete()
+        if 'permanent' in request.POST:
+            facture.delete()
+        else:
+            facture.facture_numero = None
+            facture.facture_status = 'no_facture'
+            facture.remarque = 'non payé'
+            facture.save()
         return redirect('liste_factures')
     return render(request, 'Application/supprimer_facture.html', {'facture': facture})
 
@@ -209,7 +217,12 @@ def supprimer_facture(request, pk):
 def supprimer_devis(request, pk):
     devis = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
-        devis.delete()
+        if 'permanent' in request.POST:
+            devis.delete()
+        else:
+            devis.devis_numero = None
+            devis.devis_status = 'no_devis'
+            devis.save()
         return redirect('liste_devis')
     return render(request, 'Application/supprimer_devis.html', {'devis': devis})
 
@@ -218,7 +231,12 @@ def supprimer_devis(request, pk):
 def supprimer_bl(request, pk):
     bon_livraison = get_object_or_404(Commande, pk=pk)
     if request.method == 'POST':
-        bon_livraison.delete()
+        if 'permanent' in request.POST:
+            bon_livraison.delete()
+        else:
+            bon_livraison.bl_numero = None
+            bon_livraison.bl_status = 'no_bl'
+            bon_livraison.save()
         return redirect('liste_bon_livraison')
     return render(request, 'Application/supprimer_bl.html', {'bon_livraison': bon_livraison})
 
@@ -242,18 +260,17 @@ def generer_devis(request, pk):
         if not commande.devis_numero:
             last_devis = Commande.objects.exclude(devis_numero=None).order_by('-devis_numero').first()
             if last_devis:
-                commande.devis_numero = last_devis.devis_numero+1
+                commande.devis_numero = last_devis.devis_numero + 1
             else:
-                commande.devis_numero=1
-
+                commande.devis_numero = 1
 
         for idx, option in enumerate(Option.objects.filter(designation__commande=commande)):
             try:
-                    unit_price = Decimal(unit_prices[idx])
+                unit_price = Decimal(unit_prices[idx])
             except (IndexError, ValueError):
-                    unit_price = Decimal('0.00')            
-            option.unit_price = unit_price 
-            option.total_ht = unit_price * option.quantity 
+                unit_price = Decimal('0.00')
+            option.unit_price = unit_price
+            option.total_ht = unit_price * option.quantity
             option.tva_20 = option.total_ht * Decimal('0.2')
             option.total_ttc = option.total_ht + option.tva_20
             option.save()
@@ -264,7 +281,9 @@ def generer_devis(request, pk):
         total_ttc = total_ht + tva_20
 
         commande.devis_status = 'devis_termine'
+        commande.devis_date = datetime.now()  # Set the devis date
         commande.save()
+
         # Generate the PDF using WeasyPrint
         html_string = render_to_string('Application/devis_template.html', {
             'commande': commande,
@@ -297,7 +316,7 @@ def generer_devis(request, pk):
     total_ht = sum(option.unit_price * option.quantity if option.unit_price else Decimal('0.00') for designation in commande.designations.all() for option in designation.options.all())
     tva_20 = total_ht * Decimal('0.20')
     total_ttc = total_ht + tva_20
-    commande.devis_status = 'devis_termine'  # Mark facture as complete
+    commande.devis_status = 'devis_termine'
     commande.save()
     return render(request, 'Application/generer_devis.html', {
         'commande': commande,
@@ -305,8 +324,7 @@ def generer_devis(request, pk):
         'tva_20': tva_20,
         'total_ttc': total_ttc
     })
-
-login_required
+@login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def update_devis_status(request, pk):
     devis = get_object_or_404(Commande, pk=pk)
@@ -381,50 +399,40 @@ def designation_commande(request, pk):
         return redirect('liste_commandes')
 
     return render(request, 'Application/designation_commande.html', {'commande': commande})
+
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def generer_facture(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     date = datetime.now().strftime('%B %d, %Y')
 
-    
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
-        unit_prices = request.POST.getlist('unit_price[]')
-        total_prices = []
         bc_number = request.POST.get('bc_number')
         date_bc = request.POST.get('date_bc')
 
+    # Automatically assign a facture number if not already assigned
+    if not commande.facture_numero:
+        last_facture = Commande.objects.exclude(facture_numero=None).order_by('-facture_numero').first()
+        if last_facture:
+            commande.facture_numero = last_facture.facture_numero + 1
+        else:
+            commande.facture_numero = 1
+    
+    total_ht = Decimal('0.00')  # Initialize total_ht
+    for designation in commande.designations.all():
+        for option in designation.options.all():
+            if option.unit_price is not None:
+                total_ht += option.unit_price * option.quantity
 
-         # Automatically assign a facture number if not already assigned
-        if not commande.facture_numero:
-            last_facture = Commande.objects.exclude(facture_numero=None).order_by('-facture_numero').first()
-            if last_facture:
-                commande.facture_numero = last_facture.facture_numero + 1
-            else:
-                commande.facture_numero = 1
+    tva_20 = total_ht * Decimal('0.20')
+    total_ttc = total_ht + tva_20
 
-
-
-        for idx, option in enumerate(Option.objects.filter(designation__commande=commande)):
-            unit_price = Decimal(unit_prices[idx])
-            option.unit_price = unit_price
-            option.total_ht = unit_price * option.quantity
-            option.tva_20 = option.total_ht * Decimal('0.2')
-            option.total_ttc = option.total_ht + option.tva_20
-            option.save()
-            total_prices.append(option.total_ht)
-
-
-        total_ht = sum(total_prices)
-        tva_20 = total_ht * Decimal('0.20')
-        total_ttc = total_ht + tva_20
-        
-
-        # Save these values to the Commande model
+    if request.method == 'POST':
+        commande.facture_status = 'facture_termine'
+        commande.facture_date = datetime.now()  # Set the facture date
         commande.bc_number = bc_number
         commande.date_bc = date_bc
-        commande.facture_status = 'facture_termine'  # Mark facture as complete
         commande.save()
 
         # Generate the PDF using WeasyPrint
@@ -434,8 +442,6 @@ def generer_facture(request, pk):
             'bc_number': bc_number,
             'date_bc': date_bc,
             'quantities': quantities,
-            'unit_prices': unit_prices,
-            'total_prices': total_prices,
             'total_ht': total_ht,
             'tva_20': tva_20,
             'total_ttc': total_ttc,
@@ -456,11 +462,6 @@ def generer_facture(request, pk):
             os.startfile(pdf_path)
 
         return redirect('liste_factures')
-
-    total_ht = sum(option.unit_price * option.quantity if option.unit_price else Decimal('0.00') for designation in commande.designations.all() for option in designation.options.all())
-    tva_20 = total_ht * Decimal('0.20')
-    total_ttc = total_ht + tva_20
-
 
     return render(request, 'Application/generer_facture.html', {
         'commande': commande,
@@ -500,9 +501,11 @@ def generer_bon_livraison(request, pk):
         if not commande.bl_numero:
             last_bl = Commande.objects.exclude(bl_numero=None).order_by('-bl_numero').first()
             new_bl_numero = last_bl.bl_numero + 1 if last_bl else 1
-            commande.bl_numero = new_bl_numero
-            commande.bl_status = 'bl_termine'
-            commande.save()
+         
+        commande.bl_numero = new_bl_numero
+        commande.bl_status = 'bl_termine'
+        commande.bl_date = datetime.now()  # Set the facture date
+        commande.save()
 
         # Generate the PDF using WeasyPrint
         html_string = render_to_string('Application/bon_livraison_template.html', {
@@ -531,7 +534,7 @@ def generer_bon_livraison(request, pk):
         'selected_commandes': selected_commandes   
     })
 
-login_required
+@login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def update_bl_status(request, pk):
     bon_livraison = get_object_or_404(Commande, pk=pk)
@@ -554,4 +557,3 @@ def clear_log(request):
     if request.method == 'POST':
         CommandeLog.objects.all().delete()
     return redirect('log_view')
-

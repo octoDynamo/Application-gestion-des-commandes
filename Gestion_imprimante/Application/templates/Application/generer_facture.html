@@ -112,8 +112,8 @@
                             {% endfor %}
                         </td>
                         <td>{{ designation.options.first.quantity }}</td>
-                        <td><input type="number" name="unit_price[]" class="form-control" step="0.01" value="{{ option.unit_price|default_zero }}"></td>
-                        <td class="right-align">{{ designation.options.first.unit_price|default_zero|multiply:designation.options.first.quantity|default_zero|floatformat:2 }}</td>
+                        <td>{{ designation.options.first.unit_price|default:"0.00" }}</td>
+                        <td class="right-align">{{ designation.options.first.unit_price|default:"0.00"|multiply:designation.options.first.quantity|floatformat:2 }}</td>
                     </tr>
                     {% endfor %}
                     <tr>
@@ -139,7 +139,7 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const unitPriceInputs = document.querySelectorAll("input[name='unit_price[]']");
+        const unitPriceCells = document.querySelectorAll("td:nth-child(4)");
         const quantityCells = document.querySelectorAll("td:nth-child(3)");
         const ptHTCells = document.querySelectorAll("td:nth-child(5)");
         const totalHTCell = document.getElementById("total_ht");
@@ -149,9 +149,9 @@
         function calculateTotals() {
             let totalHT = 0;
 
-            unitPriceInputs.forEach((input, index) => {
+            unitPriceCells.forEach((cell, index) => {
                 const quantity = parseFloat(quantityCells[index].innerText) || 0;
-                const unitPrice = parseFloat(input.value) || 0;
+                const unitPrice = parseFloat(cell.innerText) || 0;
                 const ptHT = unitPrice * quantity;
                 ptHTCells[index].innerText = ptHT.toFixed(2);
                 totalHT += ptHT;
@@ -165,11 +165,8 @@
             totalTTCCell.innerText = totalTTC.toFixed(2);
         }
 
-        unitPriceInputs.forEach(input => {
-            input.addEventListener("input", calculateTotals);
-        });
-
         calculateTotals(); // Initial calculation
     });
 </script>
+
 {% endblock %}

@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load static %}
+{% load commande_extras %}
 
 {% block title %}Liste des Commandes{% endblock %}
 
@@ -75,10 +77,10 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Numéro Dossier</th>
-                            <th>Référence Client</th>
-                            <th>Nom Client</th>
-                            <th>Date et Heure</th>
+                            <th>N° Dossier</th>
+                            <th>Réf_Client</th>
+                            <th>Nom_Client</th>
+                            <th>Date</th>
                             <th>Statut</th>
                             <th>Actions</th>
                         </tr>
@@ -90,8 +92,8 @@
                                     <td>{{ commande.order_id }}</td>
                                     <td>{{ commande.company_reference_number }}</td>
                                     <td>{{ commande.client_name }}</td>
-                                    <td>{{ commande.date_time }}</td>
-                                    <td>{{ commande.order_status }}</td>
+                                    <td>{{ commande.date_time|date:"d/m/Y" }}</td>
+                                    <td>{{ commande.order_status|translate_status }}</td>
                                     <td>
                                         <div class="btn-container">
                                             <a href="{% url 'modifier_commande' commande.pk %}" class="btn btn-sm btn-custom-warning">

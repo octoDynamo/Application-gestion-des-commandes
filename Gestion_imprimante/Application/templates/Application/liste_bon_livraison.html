@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load static %}
 {% block title %}Liste Bon de Livraison{% endblock %}
 
 {% block content %}
@@ -82,10 +82,11 @@
         <table class="table table-striped" id="factureTable">
             <thead>
                 <tr>
-                    <th>Numéro Dossier</th>
-                    <th>Bon de Livraison N°</th>
-                    <th>Client</th>
-                    <th>Référence Client</th>
+                    <th>N° Dossier</th>
+                    <th>N° Bon_Livraison</th>
+                    <th>Réf_Client</th>
+                    <th>Nom_Client</th>
+                    <th>Date</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -95,8 +96,9 @@
                     <tr>
                         <td>{{ bon_livraison.order_id }}</td>
                         <td>{{ bon_livraison.bl_numero }}</td>
-                        <td>{{ bon_livraison.client_name }}</td>
                         <td>{{ bon_livraison.company_reference_number }}</td>
+                        <td>{{ bon_livraison.client_name }}</td>
+                        <td>{{ bon_livraison.bl_date|date:"d/m/Y" }}</td>
                         <td>
                             <form method="post" action="{% url 'update_bl_status' bon_livraison.pk %}">
                                 {% csrf_token %}

@@ -104,8 +104,8 @@
                             {% endfor %}
                         </td>
                         <td>{{ designation.options.first.quantity }}</td>
-                        <td><input type="number" name="unit_price[]" class="form-control" step="0.01" value="{{ option.unit_price|default_zero }}"></td>
-                        <td class="right-align">{{ designation.options.first.unit_price|default_zero|multiply:designation.options.first.quantity|default_zero|floatformat:2 }}</td>
+                        <td><input type="number" name="unit_price[]" class="form-control" step="0.01" value="{{ designation.options.first.unit_price|default:0 }}"></td>
+                        <td class="right-align">{{ designation.options.first.unit_price|default:0|multiply:designation.options.first.quantity|default:0|floatformat:2 }}</td>
                     </tr>
                     {% endfor %}
                     <tr>
@@ -124,7 +124,7 @@
             </table>
         </div>
         <div class="text-center">
-            <button type="submit" class="btn btn-primary-custom">Générer Devis</button>
+            <button type="submit" class="fas fa-file-alt fa-2x custom-icon"></button>
         </div>
     </form>
 </div>

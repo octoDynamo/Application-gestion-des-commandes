@@ -1,28 +1,51 @@
+# Application/models.py
+
 from django.db import models
 from django.contrib.auth.models import User
 
-
 class Commande(models.Model):
-    order_id = models.AutoField(primary_key=True)  # Auto-incremented primary key
+    order_id = models.AutoField(primary_key=True)
     date_time = models.DateTimeField(auto_now_add=True)
     company_reference_number = models.CharField(max_length=100)
-    client_name = models.CharField(max_length=100, default="")  # New field
+    client_name = models.CharField(max_length=100, default="")
     adresse = models.CharField(max_length=255, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     fax = models.CharField(max_length=50, blank=True, null=True)
     ice = models.CharField(max_length=50, blank=True, null=True)
     infographiste = models.CharField(max_length=100, blank=True, null=True)
-    order_status = models.CharField(max_length=50, choices=[ ('draft', 'Draft'), 
-        ('completed', 'Completed'), 
-        ('devis', 'Devis'), 
-        ('facture', 'Facture'), 
-        ('bon_livraison', 'Bon de Livraison'), 
-        ('situation_client', 'Situation Client')
+    order_status = models.CharField(max_length=50, choices=[
+        ('draft', 'Draft'),
+        ('completed', 'Completed')
     ])
-    bc_number = models.CharField(max_length=50, blank=True, null=True)  # New field for BC number
-    date_bc = models.DateField(blank=True, null=True) 
+    bc_number = models.CharField(max_length=50, blank=True, null=True)
+    date_bc = models.DateField(blank=True, null=True)
+    devis_status = models.CharField(max_length=50, default='pas de devis')
+    devis_date = models.DateTimeField(blank=True, null=True)
+    devis_numero = models.IntegerField(null=True, blank=True)
+    facture_status = models.CharField(max_length=50, default='pas de facture')
+    facture_date = models.DateTimeField(blank=True, null=True)
+    facture_numero = models.IntegerField(null=True, blank=True)
+    bl_status = models.CharField(max_length=50, default='pas de bon_livraison')
+    bl_date = models.DateTimeField(blank=True, null=True)
+    bl_numero = models.IntegerField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Commande {self.order_id}: {self.client_name}"
+
+class Devis(models.Model):
+    commande = models.ForeignKey(Commande, related_name='devis', on_delete=models.CASCADE)
     devis_numero = models.PositiveIntegerField(unique=True, null=True, blank=True)
-    bl_numero = models.PositiveIntegerField(unique=True, null=True, blank=True)
+    devis_status = models.CharField(max_length=50, choices=[
+        ('no_devis', 'Pas de Devis'),
+        ('devis_termine', 'Devis Terminé')
+    ], default='pas de devis')
+    devis_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+
+    def __str__(self):
+        return f"Devis {self.devis_numero}"
+
+class Facture(models.Model):
+    commande = models.ForeignKey(Commande, related_name='factures', on_delete=models.CASCADE)
     facture_numero = models.PositiveIntegerField(unique=True, null=True, blank=True)
     facture_status = models.CharField(max_length=50, choices=[
         ('no_facture', 'Pas de Facture'),
@@ -32,19 +55,22 @@ class Commande(models.Model):
         ('paye', 'Payé'),
         ('non_paye', 'Non Payé')
     ], default='non payé')
-    devis_status = models.CharField(max_length=50, choices=[
-        ('no_devis', 'Pas de Devis'),
-        ('devis_termine', 'Devis Terminé')
-    ], default='pas de devis')
+    facture_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+
+    def __str__(self):
+        return f"Facture {self.facture_numero}"
+
+class BonLivraison(models.Model):
+    commande = models.ForeignKey(Commande, related_name='bon_livraison', on_delete=models.CASCADE)
+    bl_numero = models.PositiveIntegerField(unique=True, null=True, blank=True)
     bl_status = models.CharField(max_length=50, choices=[
         ('no_bl', 'Pas de bon_livraison'),
         ('bl_termine', 'bon_livraison Terminé')
     ], default='pas de bon_livraison')
-    designations_data = models.JSONField(default=list)  # Renamed field
-    options_data = models.JSONField(default=dict)
+    bl_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
-        return f"Commande {self.order_id}: {self.client_name}"
+        return f"Bon de Livraison {self.bl_numero}"
 
 class Designation(models.Model):
     name = models.CharField(max_length=255)
@@ -63,15 +89,16 @@ class Option(models.Model):
     total_ht = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     tva_20 = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_ttc = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    grammage = models.CharField(max_length=255, blank=True, null=True)  # Ajouter ce champ
-    paragraph = models.TextField(blank=True, null=True)  # Add this field to store the paragraph input
-    recto_verso = models.CharField(max_length=2, choices=[('R', 'R'), ('RV', 'R/V')], blank=True, null=True)  # Ajouter ce champ
+    grammage = models.CharField(max_length=255, blank=True, null=True)
+    paragraph = models.TextField(blank=True, null=True)
+    recto_verso = models.CharField(max_length=2, choices=[('R', 'R'), ('RV', 'R/V')], blank=True, null=True)
     pelliculage_mat = models.BooleanField(default=False)
     pelliculage_brillant = models.BooleanField(default=False)
     spiral = models.BooleanField(default=False)
     piquage = models.BooleanField(default=False)
     collage = models.BooleanField(default=False)
     cousu = models.BooleanField(default=False)
+
     def __str__(self):
         return self.option_name
 

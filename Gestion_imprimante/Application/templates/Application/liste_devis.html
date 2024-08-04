@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load static %}
 {% block title %}Liste des Devis{% endblock %}
 
 {% block content %}
@@ -88,21 +88,23 @@
         <table class="table table-striped" id="devisTable">
             <thead>
                 <tr>
-                    <th>Numéro Dossier</th>
-                    <th>Devis N°</th>
-                    <th>Client</th>
-                    <th>Référence Client</th>
+                    <th>N° Dossier</th>
+                    <th>N° Devis</th>
+                    <th>Réf_Client</th>
+                    <th>Nom_Client</th>
+                    <th>Date</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% for devis in devis %}
-                    <tr>
+                {% for devis in devis_list %}
+                <tr>
                         <td>{{ devis.order_id }}</td>
-                        <td>{{ devis.devis_numero }}</td>
-                        <td>{{ devis.client_name }}</td>
+                        <td>{{ devis.devis_numero}}</td>
                         <td>{{ devis.company_reference_number }}</td>
+                        <td>{{ devis.client_name }}</td>
+                        <td>{{ devis.devis_date|date:"d/m/Y"}}</td>
                         <td>
                             <form method="post" action="{% url 'update_devis_status' devis.pk %}">
                                 {% csrf_token %}
@@ -123,33 +125,34 @@
                                 </button>
                             </div>
 
-                            <!-- Modal -->
-                            <div id="deleteModal{{ devis.pk }}" class="modal fade" role="dialog">
-                                <div class="modal-dialog">
-                                    <!-- Modal content-->
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h4 class="modal-title">Confirmation de Suppression</h4>
-                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p>Êtes-vous sûr de vouloir supprimer ce devis?</p>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <form method="post" action="{% url 'supprimer_devis' devis.pk %}">
-                                                {% csrf_token %}
-                                                <button type="submit" class="btn btn-danger">Supprimer</button>
-                                                <button type="button" class="btn btn-secondary-custom" data-dismiss="modal">Annuler</button>
-                                            </form>
-                                        </div>
+                           <!-- Modal -->
+                           <div id="deleteModal{{ devis.pk }}" class="modal fade" role="dialog">
+                            <div class="modal-dialog">
+                                <!-- Modal content-->
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h4 class="modal-title">Confirmation de Suppression</h4>
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Êtes-vous sûr de vouloir supprimer ce devis?</p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <form method="post" action="{% url 'supprimer_devis' devis.pk %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger" name="permanent">Supprimer définitivement</button>
+                                            <button type="submit" class="btn btn-warning">Supprimer</button>
+                                            <button type="button" class="btn btn-secondary-custom" data-dismiss="modal">Annuler</button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 </div>
 {% endblock %}

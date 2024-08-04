@@ -1,4 +1,5 @@
 {% extends "base_no_nav.html" %}
+{% load static %}
 
 {% block title %}Supprimer Devis{% endblock %}
 
@@ -61,11 +62,14 @@
 
 <div class="container">
     <h1>Confirmation de suppression</h1>
-    <p>Êtes-vous sûr de vouloir supprimer le devis N° {{ devis.devis_numero }} ?</p>
+    <p>Êtes-vous sûr de vouloir supprimer ce devis?</p>
     <form method="post">
         {% csrf_token %}
         <div class="text-center">
-            <button type="submit" class="btn btn-danger">
+            <button type="submit" class="btn btn-danger" name="permanent">
+                <i class="fas fa-trash-alt"></i> Supprimer définitivement
+            </button>
+            <button type="submit" class="btn btn-warning">
                 <i class="fas fa-trash-alt"></i> Supprimer
             </button>
             <a href="{% url 'liste_devis' %}" class="btn btn-secondary">
