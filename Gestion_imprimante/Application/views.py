@@ -257,8 +257,22 @@ def supprimer_bl(request, pk):
 @login_required
 def modifier_commande(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
-    log_action(request.user, 'modify', commande)
-    return redirect('designation_commande', pk=commande.pk)
+    if request.method == 'POST':
+        form = CommandeForm(request.POST, instance=commande)
+        if form.is_valid():
+            commande = form.save(commit=False)
+            # Reset related statuses
+            commande.devis_status = 'non terminé'
+            commande.facture_status = 'pas de facture'
+            commande.bl_status = 'pas de bon de livraison'
+            commande.save()
+            # Log the action (assuming you have a logging function)
+            log_action(request.user, 'Modification', commande)
+            return redirect('liste_commandes')
+    else:
+        form = CommandeForm(instance=commande)
+    
+    return render(request, 'Application/modifier_commande.html', {'form': form, 'commande': commande})
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
