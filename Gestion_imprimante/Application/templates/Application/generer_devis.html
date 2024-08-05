@@ -84,29 +84,29 @@
                 </thead>
                 <tbody>
                     {% for designation in commande.designations.all %}
-                    <tr>
-                        <td>{{ forloop.counter }}</td>
-                        <td>
-                            {{ designation.name }}<br>
-                            {% for option in designation.options.all %}
-                                {% if option.option_name %} * {{ option.option_name }}{% endif %}:<br>
-                                {% if option.format %} * {{ option.format }}{% endif %}
-                                {% if option.paper_type %} * {{ option.paper_type }}{% endif %}
-                                {% if option.paragraph %} * {{ option.paragraph }}{% endif %}
-                                {% if option.grammage %} * {{ option.grammage }}{% endif %}
-                                {% if option.recto_verso %} * {{ option.recto_verso }}{% endif %}
-                                {% if option.pelliculage_mat %} * Pelliculage Mat R{% endif %}
-                                {% if option.pelliculage_brillant %} * Pelliculage Brillant R{% endif %}
-                                {% if option.spiral %} * Spiral{% endif %}
-                                {% if option.piquage %} * Piquage{% endif %}
-                                {% if option.collage %} * Collage{% endif %}
-                                {% if option.cousu %} * Cousu{% endif %}
-                            {% endfor %}
-                        </td>
-                        <td>{{ designation.options.first.quantity }}</td>
-                        <td><input type="number" name="unit_price[]" class="form-control" step="0.01" value="{{ designation.options.first.unit_price|default:0 }}"></td>
-                        <td class="right-align">{{ designation.options.first.unit_price|default:0|multiply:designation.options.first.quantity|default:0|floatformat:2 }}</td>
-                    </tr>
+                        {% for option in designation.options.all %}
+                            <tr>
+                                <td>{{ forloop.parentloop.counter }}.{{ forloop.counter }}</td>
+                                <td>
+                                    {{ designation.name }}<br>
+                                    {% if option.option_name %} * {{ option.option_name }}{% endif %}
+                                    {% if option.format %} * {{ option.format }}{% endif %}
+                                    {% if option.paper_type %} * {{ option.paper_type }}{% endif %}
+                                    {% if option.paragraph %} * {{ option.paragraph }}{% endif %}
+                                    {% if option.grammage %} * {{ option.grammage }}{% endif %}
+                                    {% if option.recto_verso %} * {{ option.recto_verso }}{% endif %}
+                                    {% if option.pelliculage_mat %} * Pelliculage Mat R{% endif %}
+                                    {% if option.pelliculage_brillant %} * Pelliculage Brillant R{% endif %}
+                                    {% if option.spiral %} * Spiral{% endif %}
+                                    {% if option.piquage %} * Piquage{% endif %}
+                                    {% if option.collage %} * Collage{% endif %}
+                                    {% if option.cousu %} * Cousu{% endif %}
+                                </td>
+                                <td>{{ option.quantity }}</td>
+                                <td><input type="number" name="unit_price[]" class="form-control" step="0.01" value="{{ option.unit_price|default:0 }}"></td>
+                                <td class="right-align">{{ option.unit_price|default:0|multiply:option.quantity|default:0|floatformat:2 }}</td>
+                            </tr>
+                        {% endfor %}
                     {% endfor %}
                     <tr>
                         <td colspan="4" class="right-align"><strong>TOTAL HT</strong></td>

@@ -322,10 +322,9 @@ def generer_devis(request, pk):
             'total_ht': total_ht,
             'tva_20': tva_20,
             'total_ttc': total_ttc,
-            'background_image_url': request.build_absolute_uri(static('images/devis.png'))
-            #'header_image_url': request.build_absolute_uri(static('images/Asset 2.png')),
-            #'footer_image_url': request.build_absolute_uri(static('images/Asset 5.png')),
-        })
+            'background_image_first_page_url': request.build_absolute_uri(static('images/devis.png')),
+            'background_image_other_pages_url': request.build_absolute_uri(static('images/fa.jpg'))
+             })
         html = HTML(string=html_string)
         pdf = html.write_pdf()
 
@@ -346,8 +345,7 @@ def generer_devis(request, pk):
     total_ht = sum(option.unit_price * option.quantity if option.unit_price else Decimal('0.00') for designation in commande.designations.all() for option in designation.options.all())
     tva_20 = total_ht * Decimal('0.20')
     total_ttc = total_ht + tva_20
-    commande.devis_status = 'devis_termine'
-    commande.save()
+
     return render(request, 'Application/generer_devis.html', {
         'commande': commande,
         'total_ht': total_ht,
