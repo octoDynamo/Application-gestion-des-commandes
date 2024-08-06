@@ -14,6 +14,9 @@
             margin: 0;
             padding: 0;
             font-family: 'Roboto', sans-serif;
+            background: url("{{ background_image_url }}") no-repeat center center;
+            background-size: cover;
+            height: 100vh; /* Ensure the background image covers the entire height */
         }
         .container {
             margin: 0 auto;
@@ -55,23 +58,6 @@
         }
         .page-break {
             page-break-before: always;
-        }
-        .first-page {
-            padding: 6cm 40px 3cm;
-            background: url("{{ background_image_first_page_url }}") no-repeat center center;
-            background-size: cover;
-            height: 100vh;
-        }
-        .other-pages {
-            background: url("{{ background_image_other_pages_url }}") no-repeat center center;
-            background-size: cover;
-            padding: 2cm 40px 3cm;
-            height: 100vh;
-        }
-        .first-page, .other-pages {
-            margin: 0 auto;
-            max-width: 800px;
-            box-sizing: border-box;
         }
         
     </style>

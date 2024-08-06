@@ -257,22 +257,8 @@ def supprimer_bl(request, pk):
 @login_required
 def modifier_commande(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
-    if request.method == 'POST':
-        form = CommandeForm(request.POST, instance=commande)
-        if form.is_valid():
-            commande = form.save(commit=False)
-            # Reset related statuses
-            commande.devis_status = 'non terminé'
-            commande.facture_status = 'pas de facture'
-            commande.bl_status = 'pas de bon de livraison'
-            commande.save()
-            # Log the action (assuming you have a logging function)
-            log_action(request.user, 'Modification', commande)
-            return redirect('liste_commandes')
-    else:
-        form = CommandeForm(instance=commande)
-    
-    return render(request, 'Application/modifier_commande.html', {'form': form, 'commande': commande})
+    log_action(request.user, 'modify', commande)
+    return redirect('designation_commande', pk=commande.pk)
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
@@ -322,9 +308,8 @@ def generer_devis(request, pk):
             'total_ht': total_ht,
             'tva_20': tva_20,
             'total_ttc': total_ttc,
-            'background_image_first_page_url': request.build_absolute_uri(static('images/devis.png')),
-            'background_image_other_pages_url': request.build_absolute_uri(static('images/fa.jpg'))
-             })
+            'background_image_url': request.build_absolute_uri(static('images/devis.png'))
+        })
         html = HTML(string=html_string)
         pdf = html.write_pdf()
 
