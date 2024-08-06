@@ -15,7 +15,7 @@ from django.contrib import messages
 from weasyprint import HTML, CSS
 from decimal import Decimal
 from django.templatetags.static import static
-from .forms import SituationClientForm
+import math
 
 
 def login_view(request):
@@ -266,6 +266,7 @@ def generer_devis(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     date = datetime.now().strftime('%B %d, %Y')
 
+
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
         unit_prices = request.POST.getlist('unit_price[]')
@@ -308,6 +309,7 @@ def generer_devis(request, pk):
             'total_ht': total_ht,
             'tva_20': tva_20,
             'total_ttc': total_ttc,
+            'second_background_image_url': request.build_absolute_uri(static('images/fa.jpg')),
             'background_image_url': request.build_absolute_uri(static('images/devis.png'))
         })
         html = HTML(string=html_string)
@@ -330,6 +332,7 @@ def generer_devis(request, pk):
     total_ht = sum(option.unit_price * option.quantity if option.unit_price else Decimal('0.00') for designation in commande.designations.all() for option in designation.options.all())
     tva_20 = total_ht * Decimal('0.20')
     total_ttc = total_ht + tva_20
+
 
     return render(request, 'Application/generer_devis.html', {
         'commande': commande,

@@ -14,17 +14,30 @@
             margin: 0;
             padding: 0;
             font-family: 'Roboto', sans-serif;
+        }
+        .page {
+            height: 100vh;
             background: url("{{ background_image_url }}") no-repeat center center;
             background-size: cover;
-            height: 100vh; /* Ensure the background image covers the entire height */
+            padding: 5cm 40px 3cm; /* Adjusted padding: 5 cm top, 3 cm bottom */
+
+        }
+        .page.second {
+            background: url("{{ second_background_image_url }}") no-repeat center center;
+            padding: 3cm 40px 3cm; /* Adjusted padding: 5 cm top, 3 cm bottom */
+            background-size: cover;
+            height: 100vh;
         }
         .container {
             margin: 0 auto;
             max-width: 800px;
             box-sizing: border-box;
         }
-        .header, .info {
-            margin-bottom: 20px;
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2cm; /* Add margin bottom for spacing */
         }
         .header-left {
             width: 70%;
@@ -33,22 +46,36 @@
             width: 30%;
             text-align: right;
         }
+        .separator {
+            margin: 10px 0;
+            border-bottom: 2px solid black;
+            width: 50%;
+            float: left;
+        }
         h1 {
             text-align: center;
             margin-bottom: 20px;
+        }
+        .info {
+            margin-bottom: 2cm; /* Add margin bottom for spacing */
+        }
+        .info p {
+            margin: 5px 0;
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 0 auto;
         }
-        th, td {
+        table, th, td {
             border: 1px solid black;
+        }
+        th, td {
             padding: 8px;
             text-align: left;
         }
         th {
-            background-color: #f2f2f2;
+            background-color: #f2f2f25c;
         }
         .total {
             font-weight: bold;
@@ -63,7 +90,8 @@
     </style>
 </head>
 <body>
-    <div class="container" id="content">
+    <div class="page" id="first-page">
+    <div class="container">
         <div class="header">
             <div class="header-left">
                 <p></p>
@@ -72,6 +100,7 @@
                 <p>Rabat, le {{ date }}</p>
             </div>
         </div>
+        <div class="separator"></div><br>
         <div class="info">
             <p>Devis N°{{ commande.devis_numero }}/{{ date|date:"Y" }}</p>
             <p>{{ commande.client_name }}</p>
@@ -109,8 +138,8 @@
                                 {% if option.cousu %} * Cousu{% endif %}
                             </td>
                             <td class="right-align">{{ option.quantity }}</td>
-                            <td class="right-align">{{ option.unit_price|default:0|floatformat:2 }}</td>
-                            <td class="right-align">{{ option.unit_price|default:0|multiply:option.quantity|default:0|floatformat:2 }}</td>
+                            <td class="right-align">{{ option.unit_price|default_zero|floatformat:2 }}</td>
+                            <td class="right-align">{{ option.unit_price|default_zero|multiply:option.quantity|default:0|floatformat:2 }}</td>
                         </tr>
                     {% endfor %}
                 {% endfor %}
@@ -129,32 +158,15 @@
             </tbody>
         </table>
     </div>
+</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
-    <script>
-        async function generatePDF() {
-            const { jsPDF } = window.jspdf;
-            const content = document.getElementById('content');
-            const pdf = new jsPDF('p', 'pt', 'a4');
+    <div class="page-break"></div>
 
-            const canvas = await html2canvas(content, { scale: 2 });
-            const imgData = canvas.toDataURL('image/png');
-            const imgProps = pdf.getImageProperties(imgData);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-
-            let position = pdfHeight;
-            while (position < canvas.height) {
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', 0, -position, pdfWidth, pdfHeight);
-                position += pdf.internal.pageSize.getHeight();
-            }
-
-            pdf.save('table.pdf');
-        }
-    </script>
+    <div class="page second" id="second-page">
+        <div class="container">
+            <!-- Content for the second page and subsequent pages goes here -->
+        </div>
+    </div>
 </body>
 </html>
+
