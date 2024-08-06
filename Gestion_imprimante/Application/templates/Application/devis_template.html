@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <style>
-         @page {
+        @page {
             size: A4;
             margin: 0;
         }
@@ -14,18 +14,14 @@
             margin: 0;
             padding: 0;
             font-family: 'Roboto', sans-serif;
-            height: 100vh;
         }
         .container {
             margin: 0 auto;
             max-width: 800px;
             box-sizing: border-box;
         }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2cm; /* Add margin bottom for spacing */
+        .header, .info {
+            margin-bottom: 20px;
         }
         .header-left {
             width: 70%;
@@ -34,31 +30,17 @@
             width: 30%;
             text-align: right;
         }
-        .separator {
-            margin: 10px 0;
-            border-bottom: 2px solid black;
-            width: 50%;
-            float: left;
-        }
         h1 {
             text-align: center;
             margin-bottom: 20px;
         }
-        .info {
-            margin-bottom: 2cm; /* Add margin bottom for spacing */
-        }
-        .info p {
-            margin: 5px 0;
-        }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 0 auto; /* Center the table */
-        }
-        table, th, td {
-            border: 1px solid black;
+            margin: 0 auto;
         }
         th, td {
+            border: 1px solid black;
             padding: 8px;
             text-align: left;
         }
@@ -91,11 +73,11 @@
             max-width: 800px;
             box-sizing: border-box;
         }
+        
     </style>
 </head>
 <body>
-    <div class="first-page">
-    <div class="container">
+    <div class="container" id="content">
         <div class="header">
             <div class="header-left">
                 <p></p>
@@ -106,7 +88,6 @@
         </div>
         <div class="info">
             <p>Devis N°{{ commande.devis_numero }}/{{ date|date:"Y" }}</p>
-            <div class="separator"></div>
             <p>{{ commande.client_name }}</p>
             <p>{{ commande.ice }}</p>
         </div>
@@ -142,8 +123,8 @@
                                 {% if option.cousu %} * Cousu{% endif %}
                             </td>
                             <td class="right-align">{{ option.quantity }}</td>
-                            <td class="right-align">{{ option.unit_price|default_zero|floatformat:2 }}</td>
-                            <td class="right-align">{{ option.unit_price|default_zero|multiply:option.quantity|default_zero|floatformat:2 }}</td>
+                            <td class="right-align">{{ option.unit_price|default:0|floatformat:2 }}</td>
+                            <td class="right-align">{{ option.unit_price|default:0|multiply:option.quantity|default:0|floatformat:2 }}</td>
                         </tr>
                     {% endfor %}
                 {% endfor %}
@@ -162,52 +143,32 @@
             </tbody>
         </table>
     </div>
-</div>
-<div class="page-break"></div>
-<div class="other-pages">
-    <div class="container">
-        <table>
-            <tbody>
-                {% for designation in commande.designations.all %}
-                    {% for option in designation.options.all %}
-                        <tr>
-                            <td>{{ forloop.parentloop.counter }}.{{ forloop.counter }}</td>
-                            <td>
-                                {{ designation.name }}<br>
-                                {% if option.option_name %} * {{ option.option_name }}{% endif %}
-                                {% if option.format %} * {{ option.format }}{% endif %}
-                                {% if option.paper_type %} * {{ option.paper_type }}{% endif %}
-                                {% if option.paragraph %} * {{ option.paragraph }}{% endif %}
-                                {% if option.grammage %} * {{ option.grammage }}{% endif %}
-                                {% if option.recto_verso %} * {{ option.recto_verso }}{% endif %}
-                                {% if option.pelliculage_mat %} * Pelliculage Mat R{% endif %}
-                                {% if option.pelliculage_brillant %} * Pelliculage Brillant R{% endif %}
-                                {% if option.spiral %} * Spiral{% endif %}
-                                {% if option.piquage %} * Piquage{% endif %}
-                                {% if option.collage %} * Collage{% endif %}
-                                {% if option.cousu %} * Cousu{% endif %}
-                            </td>
-                            <td class="right-align">{{ option.quantity }}</td>
-                            <td class="right-align">{{ option.unit_price|default_zero|floatformat:2 }}</td>
-                            <td class="right-align">{{ option.unit_price|default_zero|multiply:option.quantity|default_zero|floatformat:2 }}</td>
-                        </tr>
-                    {% endfor %}
-                {% endfor %}
-                <tr class="total">
-                    <td colspan="4">TOTAL HT</td>
-                    <td>{{ total_ht|floatformat:2 }}</td>
-                </tr>
-                <tr class="total">
-                    <td colspan="4">TVA 20%</td>
-                    <td>{{ tva_20|floatformat:2 }}</td>
-                </tr>
-                <tr class="total">
-                    <td colspan="4">TOTAL TTC</td>
-                    <td>{{ total_ttc|floatformat:2 }}</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+    <script>
+        async function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const content = document.getElementById('content');
+            const pdf = new jsPDF('p', 'pt', 'a4');
+
+            const canvas = await html2canvas(content, { scale: 2 });
+            const imgData = canvas.toDataURL('image/png');
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+            let position = pdfHeight;
+            while (position < canvas.height) {
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, -position, pdfWidth, pdfHeight);
+                position += pdf.internal.pageSize.getHeight();
+            }
+
+            pdf.save('table.pdf');
+        }
+    </script>
 </body>
 </html>
