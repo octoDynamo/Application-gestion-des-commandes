@@ -82,11 +82,10 @@
                             {% for option in designation.options.all %}
                                 <tr>
                                     <td>
-                                        <input type="checkbox" name="selected_commandes" value="{{ designation.id }}">
+                                        <input type="checkbox" name="selected_commandes" value="{{ option.id }}">
                                     </td>
                                     <td>{{ forloop.parentloop.counter }}.{{ forloop.counter }}</td>
                                     <td>
-                                        {{ designation.name }}<br>
                                         {% if option.option_name %} * {{ option.option_name }}{% endif %}
                                         {% if option.format %} * {{ option.format }}{% endif %}
                                         {% if option.paper_type %} * {{ option.paper_type }}{% endif %}
@@ -104,7 +103,7 @@
                                 </tr>
                             {% endfor %}
                         {% endfor %}
-                </tbody>
+                    </tbody>
             </table>
         </div>
         <div class="text-center">

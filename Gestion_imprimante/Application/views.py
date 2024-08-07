@@ -15,7 +15,14 @@ from django.contrib import messages
 from weasyprint import HTML, CSS
 from decimal import Decimal
 from django.templatetags.static import static
-import math
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import cm
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+
 
 
 def login_view(request):
@@ -120,6 +127,85 @@ def liste_bon_livraison(request):
 
 logger = logging.getLogger(__name__)
 
+def create_situation_client_pdf(output_path, client_name, client_ref, factures, background_image_url, second_background_image_url):
+    doc = SimpleDocTemplate(output_path, pagesize=A4)
+    elements = []
+    styles = getSampleStyleSheet()
+
+    # Define custom styles
+    large_bold_font = ParagraphStyle('LargeBoldFont', parent=styles['Normal'], fontSize=14, fontName="Helvetica-Bold")
+    normal_font = ParagraphStyle('NormalFont', parent=styles['Normal'], fontName="Helvetica", alignment=1)
+    bold_font = ParagraphStyle('BoldFont', parent=styles['Normal'], fontName="Helvetica-Bold", alignment=1)
+    table_header_font = ParagraphStyle('TableHeaderFont', parent=styles['Normal'], fontSize=12, fontName="Helvetica-Bold", alignment=1)
+
+    width, height = A4
+
+    # Header information
+    header = [
+        ["", f"Rabat, le {datetime.now().strftime('%d/%m/%y')}"],
+    ]
+    table_header = Table(header, colWidths=[14 * cm, 5 * cm])
+    table_header.setStyle(TableStyle([
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ('FONT', (0, 0), (-1, -1), 'Helvetica-Bold', 14),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 12),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(Spacer(1, 5 * cm))  # Move the content down by 5 cm from the top
+    elements.append(table_header)
+    elements.append(Spacer(1, 12))
+
+    # Info section
+    info = [
+        f"Situation du client: {client_name} (Réf: {client_ref})",
+    ]
+    for line in info:
+        elements.append(Paragraph(line, large_bold_font))
+    elements.append(Spacer(1, 24))
+
+    # Prepare data for the table
+    data = [
+        [Paragraph("Facture N°", table_header_font), 
+         Paragraph("Date", table_header_font), 
+         Paragraph("Montant TTC", table_header_font)]
+    ]
+
+    for facture in factures:
+        data.append([
+            str(facture.facture_numero),
+            facture.facture_date.strftime('%d/%m/%Y'),
+            f"{facture.total_ttc:.2f}"
+        ])
+
+    # Create the main table
+    table = Table(data, colWidths=[4 * cm, 4 * cm, 6 * cm], repeatRows=1)
+    style = TableStyle([
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONT', (0, 0), (-1, -1), 'Helvetica', 12),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEADING', (0, 0), (-1, -1), 20),  # Increase row height
+    ])
+    table.setStyle(style)
+
+    elements.append(table)
+    elements.append(Spacer(1, 1 * cm))
+
+    def on_first_page(canvas, doc):
+        draw_background(canvas, background_image_url, *A4)
+    
+    def on_later_pages(canvas, doc):
+        draw_background(canvas, second_background_image_url, *A4)
+        canvas.saveState()
+        canvas.translate(0, -5 * cm)  # Move content up by 5 cm
+        canvas.restoreState()
+
+    # Build the PDF
+    doc.build(elements, onFirstPage=on_first_page, onLaterPages=on_later_pages)
+
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def generer_situation_client(request):
@@ -134,29 +220,23 @@ def generer_situation_client(request):
         print(f"Commande ID: {facture.order_id}, Total TTC: {facture.total_ttc}")  # Debugging print statement
 
     if request.method == 'POST':
-        if request.method == 'POST':
-            selected_factures_ids = request.POST.getlist('facture_ids')
-            selected_factures = factures.filter(order_id__in=selected_factures_ids)
-        
-        html_string = render_to_string('Application/situation_client_template.html', {
-            'factures': selected_factures,
-            'client_ref': client_ref,
-            'image_url': request.build_absolute_uri(static('Application/images/devis.jpg'))
-        })
-        html = HTML(string=html_string)
-        pdf = html.write_pdf()
+        selected_factures_ids = request.POST.getlist('facture_ids')
+        selected_factures = [facture for facture in factures if str(facture.order_id) in selected_factures_ids]
 
-        response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="situation_client_{client_ref}.pdf"'
+        # Generate the PDF using ReportLab
+        output_path = os.path.join(settings.MEDIA_ROOT, f"situation_client_{client_ref}.pdf")
+        background_image_url = os.path.join(settings.STATIC_ROOT, 'images/devis.png')
+        second_background_image_url = os.path.join(settings.STATIC_ROOT, 'images/fa.jpg')
+        create_situation_client_pdf(output_path, client_name, client_ref, selected_factures, background_image_url, second_background_image_url)
 
-        # Save the PDF to a file and serve it
-        pdf_path = os.path.join(settings.MEDIA_ROOT, f"situation_client_{client_ref}.pdf")
-        with open(pdf_path, 'wb') as f:
-            f.write(pdf)
+        # Serve the PDF to the user
+        with open(output_path, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="situation_client_{client_ref}.pdf"'
 
         # Automatically open the PDF on Windows
         if os.name == 'nt':
-            os.startfile(pdf_path)
+            os.startfile(output_path)
 
         return redirect('situation_client')
 
@@ -260,12 +340,157 @@ def modifier_commande(request, pk):
     log_action(request.user, 'modify', commande)
     return redirect('designation_commande', pk=commande.pk)
 
+
+def draw_background(c, image_path, width, height):
+    c.drawImage(image_path, 0, 0, width=width, height=height)
+
+def create_devis_pdf(output_path, commande, date, total_ht, tva_20, total_ttc, background_image_url, second_background_image_url):
+    doc = SimpleDocTemplate(output_path, pagesize=A4)
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Define custom styles
+    large_bold_font = ParagraphStyle('LargeBoldFont', parent=styles['Normal'], fontSize=14, fontName="Helvetica-Bold")
+    normal_font = ParagraphStyle('NormalFont', parent=styles['Normal'], fontName="Helvetica", alignment=1)
+    bold_font = ParagraphStyle('BoldFont', parent=styles['Normal'], fontName="Helvetica-Bold", alignment=1)
+    table_header_font = ParagraphStyle('TableHeaderFont', parent=styles['Normal'], fontSize=12, fontName="Helvetica-Bold", alignment=1)
+
+    width, height = A4
+
+    # Header information
+    header = [
+        ["", f"Rabat, le {date}"],
+    ]
+    table_header = Table(header, colWidths=[14 * cm, 5 * cm])
+    table_header.setStyle(TableStyle([
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ('FONT', (0, 0), (-1, -1), 'Helvetica-Bold', 14),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 12),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(Spacer(1, 5 * cm))  # Move the content down by 5 cm from the top
+    elements.append(table_header)
+    elements.append(Spacer(1, 12))
+
+    # Info section
+    info = [
+        f"Devis N°{commande.devis_numero}/{date[-2:]}",
+        f"{commande.client_name}",
+        f"{commande.ice}"
+    ]
+    elements.append(Paragraph(info[0], large_bold_font))
+    elements.append(Spacer(1, 2))
+
+    # Separator exactly under "Devis"
+    separator = Table([[""]], colWidths=[5 * cm])
+    separator.setStyle(TableStyle([
+        ('LINEBELOW', (0, 0), (-1, 0), 2, colors.black)
+    ]))
+    elements.append(separator)
+    elements.append(Spacer(1, 12))
+
+    for line in info[1:]:
+        elements.append(Paragraph(line, large_bold_font))
+
+    elements.append(Spacer(1, 12))
+
+    # Prepare data for the table
+    data = [
+        [Paragraph("Article", table_header_font), 
+         Paragraph("Designations", table_header_font), 
+         Paragraph("QTE", table_header_font), 
+         Paragraph("P.U H.T", table_header_font), 
+         Paragraph("P.T H.T", table_header_font)]
+    ]
+    article_counter = 1
+
+    for designation in commande.designations.all():
+        for option in designation.options.all():
+            characteristics = []
+            if option.format:
+                characteristics.append(option.format)
+            if option.paper_type:
+                characteristics.append(option.paper_type)
+            if option.paragraph:
+                characteristics.append(option.paragraph)
+            if option.grammage:
+                characteristics.append(option.grammage)
+            if option.recto_verso:
+                characteristics.append(option.recto_verso)
+            if option.pelliculage_mat:
+                characteristics.append("Pelliculage Mat")
+            if option.pelliculage_brillant:
+                characteristics.append("Pelliculage Brillant")
+            if option.spiral:
+                characteristics.append("Spiral")
+            if option.piquage:
+                characteristics.append("Piquage")
+            if option.collage:
+                characteristics.append("Collage")
+            if option.cousu:
+                characteristics.append("Cousu")
+            characteristics_str = " * ".join(characteristics)
+            data.append([
+                str(article_counter),
+                Paragraph(f"* {option.option_name} * {characteristics_str}", normal_font),
+                option.quantity,
+                f"{option.unit_price:.2f}",
+                f"{(option.unit_price * option.quantity):.2f}"
+            ])
+            article_counter += 1
+
+    # Create the main table
+    table = Table(data, colWidths=[2.5 * cm, 9 * cm, 2 * cm, 2.5 * cm, 2.5 * cm], repeatRows=1)
+    style = TableStyle([
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONT', (0, 0), (-1, -1), 'Helvetica', 12),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEADING', (0, 0), (-1, -1), 35),  # Increase row height
+    ])
+    table.setStyle(style)
+
+    # Center the table with 4 cm on the right side
+    elements.append(Spacer(1, 1 * cm))
+    elements.append(table)
+    elements.append(Spacer(1, 1 * cm))
+
+    # Table for TOTAL HT, TVA, TOTAL TTC
+    summary_data = [
+        [Paragraph("TOTAL HT", bold_font), Paragraph("TVA 20%", bold_font), Paragraph("TOTAL TTC", bold_font)],
+        [f"{total_ht:.2f}", f"{tva_20:.2f}", f"{total_ttc:.2f}"]
+    ]
+    summary_table = Table(summary_data, colWidths=[6.33 * cm, 6.33 * cm, 6.33 * cm])
+    summary_style = TableStyle([
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONT', (0, 0), (-1, -1), 'Helvetica-Bold', 12),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ])
+    summary_table.setStyle(summary_style)
+
+    elements.append(summary_table)
+
+    def on_first_page(canvas, doc):
+        draw_background(canvas, background_image_url, *A4)
+
+    def on_later_pages(canvas, doc):
+        draw_background(canvas, second_background_image_url, *A4)
+        canvas.saveState()
+        canvas.translate(0, -5 * cm)  # Move content up by 4 cm
+        canvas.restoreState()
+
+    # Build the PDF
+    doc.build(elements, onFirstPage=on_first_page, onLaterPages=on_later_pages)
+    
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def generer_devis(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
-    date = datetime.now().strftime('%B %d, %Y')
-
+    date = datetime.now().strftime('%d/%m/%y')
 
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
@@ -299,33 +524,22 @@ def generer_devis(request, pk):
         commande.devis_date = datetime.now()  # Set the devis date
         commande.save()
 
-        # Generate the PDF using WeasyPrint
-        html_string = render_to_string('Application/devis_template.html', {
-            'commande': commande,
-            'date': date,
-            'quantities': quantities,
-            'unit_prices': unit_prices,
-            'total_prices': total_prices,
-            'total_ht': total_ht,
-            'tva_20': tva_20,
-            'total_ttc': total_ttc,
-            'second_background_image_url': request.build_absolute_uri(static('images/fa.jpg')),
-            'background_image_url': request.build_absolute_uri(static('images/devis.png'))
-        })
-        html = HTML(string=html_string)
-        pdf = html.write_pdf()
+       
 
-        response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="devis_{commande.devis_numero}.pdf"'
+        output_path = os.path.join(settings.MEDIA_ROOT, f"devis_{commande.devis_numero}.pdf")
+        background_image_url = os.path.join(settings.STATIC_ROOT, 'images/devis.png')
+        second_background_image_url = os.path.join(settings.STATIC_ROOT, 'images/fa.jpg')
+        create_devis_pdf(output_path, commande, date, total_ht, tva_20, total_ttc, background_image_url, second_background_image_url)
 
-        # Save the PDF to a file and serve it
-        pdf_path = os.path.join(settings.MEDIA_ROOT, f"devis_{commande.devis_numero}.pdf")
-        with open(pdf_path, 'wb') as f:
-            f.write(pdf)
+        # Serve the PDF to the user
+        with open(output_path, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="devis_{commande.devis_numero}.pdf"'
 
         # Automatically open the PDF on Windows
         if os.name == 'nt':
-            os.startfile(pdf_path)
+            os.startfile(output_path)
+
 
         return redirect('liste_devis')
 
@@ -416,11 +630,154 @@ def designation_commande(request, pk):
 
     return render(request, 'Application/designation_commande.html', {'commande': commande})
 
+def create_facture_pdf(output_path, commande, date, total_ht, tva_20, total_ttc, bc_number, date_bc, background_image_url, second_background_image_url):
+    doc = SimpleDocTemplate(output_path, pagesize=A4)
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Define custom styles
+    large_bold_font = ParagraphStyle('LargeBoldFont', parent=styles['Normal'], fontSize=14, fontName="Helvetica-Bold")
+    normal_font = ParagraphStyle('NormalFont', parent=styles['Normal'], fontName="Helvetica", alignment=1)
+    bold_font = ParagraphStyle('BoldFont', parent=styles['Normal'], fontName="Helvetica-Bold", alignment=1)
+    table_header_font = ParagraphStyle('TableHeaderFont', parent=styles['Normal'], fontSize=12, fontName="Helvetica-Bold", alignment=1)
+
+    width, height = A4
+
+    # Header information
+    header = [
+        ["", f"Rabat, le {date}"],
+    ]
+    table_header = Table(header, colWidths=[14 * cm, 5 * cm])
+    table_header.setStyle(TableStyle([
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ('FONT', (0, 0), (-1, -1), 'Helvetica-Bold', 14),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 12),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(Spacer(1, 5 * cm))  # Move the content down by 5 cm from the top
+    elements.append(table_header)
+    elements.append(Spacer(1, 12))
+
+    info = [
+        f"Facture N°{commande.facture_numero}/{date[-2:]}",  # Utilisation de l'année sur deux chiffres
+        f"{commande.client_name}",
+        f"{commande.ice}",
+        f"BC N° : {bc_number}",
+        f"Date BC : {date_bc}"
+    ]
+    elements.append(Paragraph(info[0], large_bold_font))
+    elements.append(Spacer(1, 2))
+
+    # Separator exactly under "Facture"
+    separator = Table([[""]], colWidths=[5 * cm])
+    separator.setStyle(TableStyle([
+        ('LINEBELOW', (0, 0), (-1, 0), 2, colors.black)
+    ]))
+    elements.append(separator)
+    elements.append(Spacer(1, 12))
+
+    for line in info[1:]:
+        elements.append(Paragraph(line, large_bold_font))
+
+    elements.append(Spacer(1, 12))
+
+    # Prepare data for the table
+    data = [
+        [Paragraph("Article", table_header_font), 
+         Paragraph("Designations", table_header_font), 
+         Paragraph("QTE", table_header_font), 
+         Paragraph("P.U H.T", table_header_font), 
+         Paragraph("P.T H.T", table_header_font)]
+    ]
+    article_counter = 1
+
+    for designation in commande.designations.all():
+        for option in designation.options.all():
+            characteristics = []
+            if option.format:
+                characteristics.append(option.format)
+            if option.paper_type:
+                characteristics.append(option.paper_type)
+            if option.paragraph:
+                characteristics.append(option.paragraph)
+            if option.grammage:
+                characteristics.append(option.grammage)
+            if option.recto_verso:
+                characteristics.append(option.recto_verso)
+            if option.pelliculage_mat:
+                characteristics.append("Pelliculage Mat")
+            if option.pelliculage_brillant:
+                characteristics.append("Pelliculage Brillant")
+            if option.spiral:
+                characteristics.append("Spiral")
+            if option.piquage:
+                characteristics.append("Piquage")
+            if option.collage:
+                characteristics.append("Collage")
+            if option.cousu:
+                characteristics.append("Cousu")
+            characteristics_str = " * ".join(characteristics)
+            data.append([
+                str(article_counter),
+                Paragraph(f"* {option.option_name} * {characteristics_str}", normal_font),
+                option.quantity,
+                f"{option.unit_price:.2f}",
+                f"{(option.unit_price * option.quantity):.2f}"
+            ])
+            article_counter += 1
+
+    # Create the main table
+    table = Table(data, colWidths=[2.5 * cm, 9 * cm, 2 * cm, 2.5 * cm, 2.5 * cm], repeatRows=1)
+    style = TableStyle([
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONT', (0, 0), (-1, -1), 'Helvetica', 12),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEADING', (0, 0), (-1, -1), 35),  # Increase row height
+    ])
+    table.setStyle(style)
+
+    # Center the table with 4 cm on the right side
+    elements.append(Spacer(1, 1 * cm))
+    elements.append(table)
+    elements.append(Spacer(1, 1 * cm))
+
+    # Table for TOTAL HT, TVA, TOTAL TTC
+    summary_data = [
+        [Paragraph("TOTAL HT", bold_font), Paragraph("TVA 20%", bold_font), Paragraph("TOTAL TTC", bold_font)],
+        [f"{total_ht:.2f}", f"{tva_20:.2f}", f"{total_ttc:.2f}"]
+    ]
+    summary_table = Table(summary_data, colWidths=[6.33 * cm, 6.33 * cm, 6.33 * cm])
+    summary_style = TableStyle([
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONT', (0, 0), (-1, -1), 'Helvetica-Bold', 12),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+    ])
+    summary_table.setStyle(summary_style)
+
+    elements.append(summary_table)
+
+    def on_first_page(canvas, doc):
+        draw_background(canvas, background_image_url, *A4)
+
+    def on_later_pages(canvas, doc):
+        draw_background(canvas, second_background_image_url, *A4)
+        canvas.saveState()
+        canvas.translate(0, -5 * cm)  # Move content up by 4 cm
+        canvas.restoreState()
+
+    # Build the PDF
+    doc.build(elements, onFirstPage=on_first_page, onLaterPages=on_later_pages)
+
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def generer_facture(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
-    date = datetime.now().strftime('%B %d, %Y')
+    date = datetime.now().strftime('%d/%m/%y')
 
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
@@ -451,31 +808,20 @@ def generer_facture(request, pk):
         commande.date_bc = date_bc
         commande.save()
 
-        # Generate the PDF using WeasyPrint
-        html_string = render_to_string('Application/facture_template.html', {
-            'commande': commande,
-            'date': date,
-            'bc_number': bc_number,
-            'date_bc': date_bc,
-            'quantities': quantities,
-            'total_ht': total_ht,
-            'tva_20': tva_20,
-            'total_ttc': total_ttc,
-            'image_url_first_page': request.build_absolute_uri(static('Application/images/fa.jpg')),
-            'image_url_other_pages': request.build_absolute_uri(static('Application/images/fa.jpg'))
-        })
-        html = HTML(string=html_string)
-        pdf = html.write_pdf()
+        # Generate the PDF using ReportLab
+        output_path = os.path.join(settings.MEDIA_ROOT, f"facture_{commande.facture_numero}.pdf")
+        background_image_url = os.path.join(settings.STATIC_ROOT, 'images/devis.png')
+        second_background_image_url = os.path.join(settings.STATIC_ROOT, 'images/fa.jpg')
+        create_facture_pdf(output_path, commande, date, total_ht, tva_20, total_ttc, bc_number, date_bc, background_image_url, second_background_image_url)
 
-        response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="facture_{commande.facture_numero}.pdf"'
+        # Serve the PDF to the user
+        with open(output_path, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="facture_{commande.facture_numero}.pdf"'
 
-        pdf_path = os.path.join(settings.MEDIA_ROOT, f"facture_{commande.facture_numero}.pdf")
-        with open(pdf_path, 'wb') as f:
-            f.write(pdf)
-
+        # Automatically open the PDF on Windows
         if os.name == 'nt':
-            os.startfile(pdf_path)
+            os.startfile(output_path)
 
         return redirect('liste_factures')
 
@@ -498,56 +844,172 @@ def update_facture_status(request, pk):
         facture.save()
     return redirect('liste_factures')
 
+def create_bon_livraison_pdf(output_path, commande, date, background_image_url, second_background_image_url, selected_options):
+    doc = SimpleDocTemplate(output_path, pagesize=A4)
+    elements = []
+    styles = getSampleStyleSheet()
+    
+    # Define custom styles
+    large_bold_font = ParagraphStyle('LargeBoldFont', parent=styles['Normal'], fontSize=14, fontName="Helvetica-Bold")
+    normal_font = ParagraphStyle('NormalFont', parent=styles['Normal'], fontName="Helvetica", alignment=1)
+    bold_font = ParagraphStyle('BoldFont', parent=styles['Normal'], fontName="Helvetica-Bold", alignment=1)
+    table_header_font = ParagraphStyle('TableHeaderFont', parent=styles['Normal'], fontSize=12, fontName="Helvetica-Bold", alignment=1)
+
+    width, height = A4
+
+    # Header information
+    header = [
+        ["", f"Rabat, le {date}"],
+    ]
+    table_header = Table(header, colWidths=[14 * cm, 5 * cm])
+    table_header.setStyle(TableStyle([
+        ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+        ('FONT', (0, 0), (-1, -1), 'Helvetica-Bold', 14),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('LEFTPADDING', (0, 0), (-1, -1), 12),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 12),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(Spacer(1, 5 * cm))  # Move the content down by 5 cm from the top
+    elements.append(table_header)
+    elements.append(Spacer(1, 12))
+
+    # Info section
+    info = [
+        f"Bon de Livraison N°{commande.bl_numero}/{date[-2:]}",
+        f"{commande.client_name}",
+        f"{commande.ice}"
+    ]
+    elements.append(Paragraph(info[0], large_bold_font))
+    elements.append(Spacer(1, 2))
+
+    # Separator exactly under "Bon de Livraison"
+    separator = Table([[""]], colWidths=[5 * cm])
+    separator.setStyle(TableStyle([
+        ('LINEBELOW', (0, 0), (-1, 0), 2, colors.black)
+    ]))
+    elements.append(separator)
+    elements.append(Spacer(1, 12))
+
+    for line in info[1:]:
+        elements.append(Paragraph(line, large_bold_font))
+
+    elements.append(Spacer(1, 12))
+
+    # Prepare data for the table
+    data = [
+        [Paragraph("Article", table_header_font), 
+         Paragraph("Designations", table_header_font), 
+         Paragraph("QTE", table_header_font)]
+    ]
+    article_counter = 1
+
+    for option in selected_options:
+        characteristics = []
+        if option.format:
+            characteristics.append(option.format)
+        if option.paper_type:
+            characteristics.append(option.paper_type)
+        if option.paragraph:
+            characteristics.append(option.paragraph)
+        if option.grammage:
+            characteristics.append(option.grammage)
+        if option.recto_verso:
+            characteristics.append(option.recto_verso)
+        if option.pelliculage_mat:
+            characteristics.append("Pelliculage Mat")
+        if option.pelliculage_brillant:
+            characteristics.append("Pelliculage Brillant")
+        if option.spiral:
+            characteristics.append("Spiral")
+        if option.piquage:
+            characteristics.append("Piquage")
+        if option.collage:
+            characteristics.append("Collage")
+        if option.cousu:
+            characteristics.append("Cousu")
+        characteristics_str = " * ".join(characteristics)
+        data.append([
+            str(article_counter),
+            Paragraph(f"* {option.option_name} * {characteristics_str}", normal_font),
+            option.quantity
+        ])
+        article_counter += 1
+
+    # Create the main table
+    table = Table(data, colWidths=[2.5 * cm, 9 * cm, 2 * cm], repeatRows=1)
+    style = TableStyle([
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONT', (0, 0), (-1, -1), 'Helvetica', 12),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('LEADING', (0, 0), (-1, -1), 35),  # Increase row height
+    ])
+    table.setStyle(style)
+
+    elements.append(Spacer(1, 1 * cm))
+    elements.append(table)
+    elements.append(Spacer(1, 1 * cm))
+
+    def on_first_page(canvas, doc):
+        draw_background(canvas, background_image_url, *A4)
+
+    def on_later_pages(canvas, doc):
+        draw_background(canvas, second_background_image_url, *A4)
+        canvas.saveState()
+        canvas.translate(0, -5 * cm)  # Move content up by 5 cm
+        canvas.restoreState()
+
+    # Build the PDF
+    doc.build(elements, onFirstPage=on_first_page, onLaterPages=on_later_pages)
 
 @login_required
 @user_passes_test(lambda u: u.groups.filter(name='Directeurs').exists())
 def generer_bon_livraison(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
-    date = datetime.now().strftime('%B %d, %Y')
-    selected_commandes =[]
+    date = datetime.now().strftime('%d/%m/%y')
+    selected_options = []
 
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
 
         selected_commandes_ids = request.POST.getlist('selected_commandes')
         if selected_commandes_ids:
-            selected_commandes = Commande.objects.filter(order_id__in=selected_commandes_ids)
+            selected_options = Option.objects.filter(id__in=selected_commandes_ids)
 
         # Automatically assign a BL number if not already assigned
         if not commande.bl_numero:
             last_bl = Commande.objects.exclude(bl_numero=None).order_by('-bl_numero').first()
             new_bl_numero = last_bl.bl_numero + 1 if last_bl else 1
-         
-        commande.bl_numero = new_bl_numero
+            commande.bl_numero = new_bl_numero
+        else:
+            new_bl_numero = commande.bl_numero
+
         commande.bl_status = 'bl_termine'
-        commande.bl_date = datetime.now()  # Set the facture date
+        commande.bl_date = datetime.now()  # Set the BL date
         commande.save()
 
-        # Generate the PDF using WeasyPrint
-        html_string = render_to_string('Application/bon_livraison_template.html', {
-            'commande': commande,
-            'date': date,
-            'quantities': quantities,
-            'image_url': request.build_absolute_uri(static('Application/images/devis.jpg'))
-        })
-        html = HTML(string=html_string)
-        pdf = html.write_pdf()
+        # Generate the PDF using ReportLab
+        output_path = os.path.join(settings.MEDIA_ROOT, f"bon_livraison_{commande.bl_numero}.pdf")
+        background_image_url = os.path.join(settings.STATIC_ROOT, 'images/devis.png')
+        second_background_image_url = os.path.join(settings.STATIC_ROOT, 'images/fa.jpg')
+        create_bon_livraison_pdf(output_path, commande, date, background_image_url, second_background_image_url, selected_options)
 
-        response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="bon_livraison_{commande.bl_numero}.pdf"'
+        # Serve the PDF to the user
+        with open(output_path, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="bon_livraison_{commande.bl_numero}.pdf"'
 
-        pdf_path = os.path.join(settings.MEDIA_ROOT, f"bon_livraison_{commande.bl_numero}.pdf")
-        with open(pdf_path, 'wb') as f:
-            f.write(pdf)
-
+        # Automatically open the PDF on Windows
         if os.name == 'nt':
-            os.startfile(pdf_path)
+            os.startfile(output_path)
 
         return redirect('liste_bon_livraison')
 
     return render(request, 'Application/generer_bon_livraison.html', {
         'commande': commande,
-        'selected_commandes': selected_commandes   
+        'selected_commandes': selected_options
     })
 
 @login_required
