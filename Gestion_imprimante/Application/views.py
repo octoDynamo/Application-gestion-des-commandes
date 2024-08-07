@@ -19,11 +19,9 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-
-
 
 def login_view(request):
     if request.method == 'POST':
@@ -277,6 +275,7 @@ def ajouter_commande(request):
             commande = form.save(commit=False)
             commande.order_status = 'draft'
             commande.save()
+            log_action(request.user, 'add', commande)
             return redirect('designation_commande', pk=commande.order_id)
     else:
         form = CommandeForm()
@@ -495,7 +494,9 @@ def generer_devis(request, pk):
     if request.method == 'POST':
         quantities = request.POST.getlist('quantity[]')
         unit_prices = request.POST.getlist('unit_price[]')
+        print(quantities, unit_prices)  # Ajoutez cette ligne pour vérifier les valeurs
         total_prices = []
+        
 
         if not commande.devis_numero:
             last_devis = Commande.objects.exclude(devis_numero=None).order_by('-devis_numero').first()
@@ -568,8 +569,13 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
+def create_dossier_travail_pdf(output_path, html_content):
+    HTML(string=html_content).write_pdf(output_path)
+
 def designation_commande(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
+    date = datetime.now().strftime('%d/%m/%y')
+
     if request.method == 'POST':
         commande.designations.all().delete()
 
@@ -609,22 +615,20 @@ def designation_commande(request, pk):
 
         commande.order_status = 'completed'
         commande.save()
+        article_counter = 1
+        logo_url = request.build_absolute_uri(static('images/logo.png'))
+        output_path = os.path.join(settings.MEDIA_ROOT, f"dossier_travail_{commande.order_id}.pdf")
+        html_content = render_to_string('Application/dossier_travail_template.html', {'commande': commande, 'date': date, 'logo_url': logo_url, 'article_counter': article_counter})
+        create_dossier_travail_pdf(output_path, html_content)
 
-        html_string = render_to_string('Application/fiche_template.html', {
-            'commande': commande
-        })
-        html = HTML(string=html_string)
-        pdf = html.write_pdf()
+        # Serve the PDF to the user
+        with open(output_path, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="dossier_travail_{commande.order_id}.pdf"'
 
-        response = HttpResponse(pdf, content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="fiche_travail_{commande.order_id}.pdf"'
-
-        pdf_path = os.path.join(settings.MEDIA_ROOT, f"fiche_travail_{commande.order_id}.pdf")
-        with open(pdf_path, 'wb') as f:
-            f.write(pdf)
-
+        # Automatically open the PDF on Windows
         if os.name == 'nt':
-            os.startfile(pdf_path)
+            os.startfile(output_path)
 
         return redirect('liste_commandes')
 

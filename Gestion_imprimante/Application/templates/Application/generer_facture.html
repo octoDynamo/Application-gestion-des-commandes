@@ -94,7 +94,7 @@
                     {% for designation in commande.designations.all %}
                         {% for option in designation.options.all %}
                             <tr>
-                                <td>{{ forloop.parentloop.counter }}.{{ forloop.counter }}</td>
+                                <td class="article-counter"></td> <!-- Utilisation du compteur en JavaScript -->
                                 <td>
                                     {{ designation.name }}<br>
                                     {% if option.option_name %} * {{ option.option_name }}{% endif %}
@@ -145,6 +145,7 @@
         const totalHTCell = document.getElementById("total_ht");
         const tva20Cell = document.getElementById("tva_20");
         const totalTTCCell = document.getElementById("total_ttc");
+        const articleCounters = document.querySelectorAll(".article-counter");
 
         function calculateTotals() {
             let totalHT = 0;
@@ -164,8 +165,16 @@
             tva20Cell.innerText = tva20.toFixed(2);
             totalTTCCell.innerText = totalTTC.toFixed(2);
         }
+        function updateArticleCounters() {
+            articleCounters.forEach((counter, index) => {
+                counter.innerText = index + 1;
+            });
+        }
+
 
         calculateTotals(); // Initial calculation
+        updateArticleCounters(); // Initial numbering
+
     });
 </script>
 
