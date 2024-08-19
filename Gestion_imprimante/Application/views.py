@@ -3,7 +3,7 @@ import os
 import logging.config
 from django.shortcuts import render
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -22,6 +22,9 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
+import logging
+
+
 
 def login_view(request):
     if request.method == 'POST':
@@ -572,71 +575,92 @@ def logout_view(request):
 def create_dossier_travail_pdf(output_path, html_content):
     HTML(string=html_content).write_pdf(output_path)
 
+logger = logging.getLogger(__name__)
+
 def designation_commande(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     date = datetime.now().strftime('%d/%m/%y')
 
     if request.method == 'POST':
-        commande.designations.all().delete()
+        logger.debug(f"Commande ID: {commande.pk}")
+        logger.debug(f"POST data: {request.POST}")
 
-        designations = request.POST.getlist('designations[]')
-        for designation_id, designation_name in enumerate(designations):
-            designation = Designation.objects.create(name=designation_name, commande=commande)
-            categories = request.POST.getlist(f'categories[{designation_id}][]')
+        try:
+            commande.designations.all().delete()
+            logger.debug("All existing designations deleted")
+
+            designations = request.POST.getlist('designations[]')
+            logger.debug(f"Designations: {designations}")
+
+            if not designations:
+                return HttpResponseBadRequest("Aucune désignation fournie.")
+        
+            for designation_id, designation_name in enumerate(designations):
+                logger.debug(f"Processing designation {designation_id}: {designation_name}")
+                designation = Designation.objects.create(name=designation_name, commande=commande)
+                categories = request.POST.getlist(f'categories[{designation_id}][]')
+                logger.debug(f"Categories for designation {designation_id}: {categories}")
+
+                for i, category in enumerate(categories):
+                    if category:
+                        quantity_str = request.POST.getlist(f'quantities[{designation_id}][]')
+                        logger.debug(f"Raw quantity string: {quantity_str[i] if i < len(quantity_str) else 'None'}")
+
+                        quantity = int(quantity_str[i]) if i < len(quantity_str) and quantity_str[i].isdigit() else 0
             
-            for i, category in enumerate(categories):
-                if category:
-                    quantity_str = request.POST.getlist(f'quantities[{designation_id}][]')
-                    quantity = None
-                    if i < len(quantity_str):
+                        logger.debug(f"Category: {category}, Quantity: {quantity}")
+
+                        option_data = {
+                            'designation': designation,
+                            'option_name': category,
+                            'quantity': quantity
+                        }
+
+                        if designation_name in ['IMPRESSION OFFSET', 'IMPRESSION PETIT FORMAT (NUMÉRIQUE)']:
+                            option_data.update({
+                                'format': request.POST.getlist(f'formats[{designation_id}][]')[i] if i < len(request.POST.getlist(f'formats[{designation_id}][]')) else "",
+                                'grammage': request.POST.getlist(f'grammages[{designation_id}][]')[i] if i < len(request.POST.getlist(f'grammages[{designation_id}][]')) else "",
+                                'paper_type': request.POST.getlist(f'paper_types[{designation_id}][]')[i] if i < len(request.POST.getlist(f'paper_types[{designation_id}][]')) else "",
+                                'recto_verso': request.POST.getlist(f'recto_versos[{designation_id}][]')[i] if i < len(request.POST.getlist(f'recto_versos[{designation_id}][]')) else "",
+                                'pelliculage_mat': request.POST.get(f'pelliculage_mat[{designation_id}][]') is not None,
+                                'pelliculage_brillant': request.POST.get(f'pelliculage_brillant[{designation_id}][]') is not None,
+                                'spiral': request.POST.get(f'spiral[{designation_id}][]') is not None,
+                                'piquage': request.POST.get(f'piquage[{designation_id}][]') is not None,
+                                'collage': request.POST.get(f'collage[{designation_id}][]') is not None,
+                                'cousu': request.POST.get(f'cousu[{designation_id}][]') is not None
+                            })
+                        else:
+                            option_data.update({
+                                'paragraph': request.POST.getlist(f'paragraphs[{designation_id}][]')[i] if i < len(request.POST.getlist(f'paragraphs[{designation_id}][]')) else ""
+                            })
+
                         try:
-                            quantity = int(quantity_str[i]) if quantity_str[i].isdigit() else 0
-                        except ValueError:
-                            quantity = 0
+                            Option.objects.create(**option_data)
+                        except Exception as e:
+                            logger.error(f"Error creating Option: {e}")
+                            return HttpResponseServerError("Erreur lors de la création de l'option.")
 
-                    option_data = {
-                        'designation': designation,
-                        'option_name': category,
-                        'quantity': quantity
-                    }
 
-                    if designation_name in ['IMPRESSION OFFSET', 'IMPRESSION PETIT FORMAT (NUMÉRIQUE)']:
-                        option_data.update({
-                            'format': request.POST.getlist(f'formats[{designation_id}][]')[i] if i < len(request.POST.getlist(f'formats[{designation_id}][]')) else "",
-                            'grammage': request.POST.getlist(f'grammages[{designation_id}][]')[i] if i < len(request.POST.getlist(f'grammages[{designation_id}][]')) else "",
-                            'paper_type': request.POST.getlist(f'paper_types[{designation_id}][]')[i] if i < len(request.POST.getlist(f'paper_types[{designation_id}][]')) else "",
-                            'recto_verso': request.POST.getlist(f'recto_versos[{designation_id}][]')[i] if i < len(request.POST.getlist(f'recto_versos[{designation_id}][]')) else "",
-                            'pelliculage_mat': request.POST.get(f'pelliculage_mat[{designation_id}][]') is not None,
-                            'pelliculage_brillant': request.POST.get(f'pelliculage_brillant[{designation_id}][]') is not None,
-                            'spiral': request.POST.get(f'spiral[{designation_id}][]') is not None,
-                            'piquage': request.POST.get(f'piquage[{designation_id}][]') is not None,
-                            'collage': request.POST.get(f'collage[{designation_id}][]') is not None,
-                            'cousu': request.POST.get(f'cousu[{designation_id}][]') is not None
-                        })
-                    else:
-                        option_data.update({
-                            'paragraph': request.POST.getlist(f'paragraphs[{designation_id}][]')[i] if i < len(request.POST.getlist(f'paragraphs[{designation_id}][]')) else ""
-                        })
 
-                    Option.objects.create(**option_data)
+            commande.order_status = 'completed'
+            commande.save()
+            article_counter = 1
+            logo_url = request.build_absolute_uri(static('images/logo.png'))
+            output_path = os.path.join(settings.MEDIA_ROOT, f"dossier_travail_{commande.order_id}.pdf")
+            html_content = render_to_string('Application/dossier_travail_template.html', {'commande': commande, 'date': date, 'logo_url': logo_url, 'article_counter': article_counter})
+            create_dossier_travail_pdf(output_path, html_content)
 
-        commande.order_status = 'completed'
-        commande.save()
-        article_counter = 1
-        logo_url = request.build_absolute_uri(static('images/logo.png'))
-        output_path = os.path.join(settings.MEDIA_ROOT, f"dossier_travail_{commande.order_id}.pdf")
-        html_content = render_to_string('Application/dossier_travail_template.html', {'commande': commande, 'date': date, 'logo_url': logo_url, 'article_counter': article_counter})
-        create_dossier_travail_pdf(output_path, html_content)
+            # Serve the PDF to the user
+            with open(output_path, 'rb') as f:
+                response = HttpResponse(f.read(), content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="dossier_travail_{commande.order_id}.pdf"'
 
-        # Serve the PDF to the user
-        with open(output_path, 'rb') as f:
-            response = HttpResponse(f.read(), content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="dossier_travail_{commande.order_id}.pdf"'
-
-        # Automatically open the PDF on Windows
-        if os.name == 'nt':
-            os.startfile(output_path)
-
+            # Automatically open the PDF on Windows
+            if os.name == 'nt':
+                os.startfile(output_path)
+        except Exception as e:
+            logger.error(f"Error occurred: {e}")
+            return HttpResponseServerError("Une erreur est survenue.")
         return redirect('liste_commandes')
 
     return render(request, 'Application/designation_commande.html', {'commande': commande})

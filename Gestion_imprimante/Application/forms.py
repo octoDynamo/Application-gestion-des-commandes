@@ -15,3 +15,14 @@ class OptionForm(forms.ModelForm):
         model = Option
         fields = ['option_name', 'format', 'paper_type', 'paragraph', 'grammage', 'recto_verso', 
                   'pelliculage_mat', 'pelliculage_brillant', 'spiral', 'piquage', 'collage', 'cousu', 'quantity', 'unit_price']
+    def clean_quantity(self):
+        quantity = self.cleaned_data.get('quantity')
+        if quantity < 1:
+            raise forms.ValidationError("Quantity must be at least 1.")
+        return quantity
+
+    def clean_unit_price(self):
+        unit_price = self.cleaned_data.get('unit_price')
+        if unit_price < 0:
+            raise forms.ValidationError("Unit price cannot be negative.")
+        return unit_price
