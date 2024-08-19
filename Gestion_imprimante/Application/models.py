@@ -95,7 +95,7 @@ class Option(models.Model):
     designation = models.ForeignKey(Designation, related_name='options', on_delete=models.CASCADE)
     option_name = models.CharField(max_length=255)
     format = models.CharField(max_length=255, blank=True, null=True)
-    quantity = models.PositiveIntegerField(default=1)  # Assurez-vous que ce champ est correctement défini
+    quantity = models.PositiveIntegerField()
     paper_type = models.CharField(max_length=255, blank=True, null=True)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     total_ht = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -113,6 +113,7 @@ class Option(models.Model):
 
     def __str__(self):
         return self.option_name
+
 
 class Prix(models.Model):
     option = models.ForeignKey(Option, related_name='prices', on_delete=models.CASCADE)

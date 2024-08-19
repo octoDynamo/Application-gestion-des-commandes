@@ -9,6 +9,7 @@ class CommandeForm(forms.ModelForm):
 
 class SituationClientForm(forms.Form):
     client_ref = forms.CharField(max_length=255, label='Référence Client')
+
 class OptionForm(forms.ModelForm):
     class Meta:
         model = Option
