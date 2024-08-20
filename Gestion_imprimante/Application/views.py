@@ -587,38 +587,31 @@ def designation_commande(request, pk):
             for i, category in enumerate(categories):
                 if category:
                     quantity_str = request.POST.getlist(f'quantities[{designation_id}][]')
-                    quantity = None
-                    if i < len(quantity_str):
-                        try:
-                            quantity = int(quantity_str[i]) if quantity_str[i].isdigit() else 0
-                        except ValueError:
-                            quantity = 0
-
-                    option_data = {
-                        'designation': designation,
-                        'option_name': category,
-                        'quantity': quantity
-                    }
+                    quantity = int(quantity_str[i]) if quantity_str and i < len(quantity_str) and quantity_str[i].isdigit() else 0
 
                     if designation_name in ['IMPRESSION OFFSET', 'IMPRESSION PETIT FORMAT (NUMÉRIQUE)']:
-                        option_data.update({
-                            'format': request.POST.getlist(f'formats[{designation_id}][]')[i] if i < len(request.POST.getlist(f'formats[{designation_id}][]')) else "",
-                            'grammage': request.POST.getlist(f'grammages[{designation_id}][]')[i] if i < len(request.POST.getlist(f'grammages[{designation_id}][]')) else "",
-                            'paper_type': request.POST.getlist(f'paper_types[{designation_id}][]')[i] if i < len(request.POST.getlist(f'paper_types[{designation_id}][]')) else "",
-                            'recto_verso': request.POST.getlist(f'recto_versos[{designation_id}][]')[i] if i < len(request.POST.getlist(f'recto_versos[{designation_id}][]')) else "",
-                            'pelliculage_mat': request.POST.get(f'pelliculage_mat[{designation_id}][]') is not None,
-                            'pelliculage_brillant': request.POST.get(f'pelliculage_brillant[{designation_id}][]') is not None,
-                            'spiral': request.POST.get(f'spiral[{designation_id}][]') is not None,
-                            'piquage': request.POST.get(f'piquage[{designation_id}][]') is not None,
-                            'collage': request.POST.get(f'collage[{designation_id}][]') is not None,
-                            'cousu': request.POST.get(f'cousu[{designation_id}][]') is not None
-                        })
+                        option = Option.objects.create(
+                            designation=designation,
+                            option_name=category,
+                            format=request.POST.getlist(f'formats[{designation_id}][]')[i] if request.POST.getlist(f'formats[{designation_id}][]') else "",
+                            quantity=quantity,
+                            grammage=request.POST.getlist(f'grammages[{designation_id}][]')[i] if request.POST.getlist(f'grammages[{designation_id}][]') else "",
+                            paper_type=request.POST.getlist(f'paper_types[{designation_id}][]')[i] if request.POST.getlist(f'paper_types[{designation_id}][]') else "",
+                            recto_verso=request.POST.getlist(f'recto_versos[{designation_id}][]')[i] if request.POST.getlist(f'recto_versos[{designation_id}][]') else "",
+                            pelliculage_mat=request.POST.get(f'pelliculage_mat[{designation_id}][]') is not None,
+                            pelliculage_brillant=request.POST.get(f'pelliculage_brillant[{designation_id}][]') is not None,
+                            spiral=request.POST.get(f'spiral[{designation_id}][]') is not None,
+                            piquage=request.POST.get(f'piquage[{designation_id}][]') is not None,
+                            collage=request.POST.get(f'collage[{designation_id}][]') is not None,
+                            cousu=request.POST.get(f'cousu[{designation_id}][]') is not None
+                        )
                     else:
-                        option_data.update({
-                            'paragraph': request.POST.getlist(f'paragraphs[{designation_id}][]')[i] if i < len(request.POST.getlist(f'paragraphs[{designation_id}][]')) else ""
-                        })
-
-                    Option.objects.create(**option_data)
+                        option = Option.objects.create(
+                            designation=designation,
+                            option_name=category,
+                            quantity=quantity,
+                            paragraph=request.POST.getlist(f'paragraphs[{designation_id}][]')[i] if request.POST.getlist(f'paragraphs[{designation_id}][]') else ""
+                        )
 
         commande.order_status = 'completed'
         commande.save()
