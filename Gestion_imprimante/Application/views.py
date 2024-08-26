@@ -3,7 +3,7 @@ import os
 import logging.config
 from django.shortcuts import render
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -572,67 +572,96 @@ def logout_view(request):
 def create_dossier_travail_pdf(output_path, html_content):
     HTML(string=html_content).write_pdf(output_path)
 
+# Function to convert form data to boolean
+def convert_to_boolean(value):
+    return value.lower() in ['on', 'true', '1']
+
 def designation_commande(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     date = datetime.now().strftime('%d/%m/%y')
 
     if request.method == 'POST':
-        commande.designations.all().delete()
+        try:
+            # Supprimer les désignations existantes pour la commande
+            commande.designations.all().delete()
 
-        designations = request.POST.getlist('designations[]')
-        for designation_id, designation_name in enumerate(designations):
-            designation = Designation.objects.create(name=designation_name, commande=commande)
-            categories = request.POST.getlist(f'categories[{designation_id}][]')
-            
-            for i, category in enumerate(categories):
-                if category:
-                    quantity_str = request.POST.getlist(f'quantities[{designation_id}][]')
-                    quantity = int(quantity_str[i]) if quantity_str and i < len(quantity_str) and quantity_str[i].isdigit() else 0
+            designations = request.POST.getlist('designations[]')
 
+            if not designations:
+                return HttpResponseBadRequest("Aucune désignation fournie.")
+        
+            for designation_id, designation_name in enumerate(designations):
+                designation = Designation.objects.create(name=designation_name, commande=commande)
+                categories = request.POST.getlist(f'categories[{designation_id}][]')
+                quantity_str_list = request.POST.getlist(f'quantities[{designation_id}][]')
+
+                logger.debug(f"Categories for designation {designation_name}: {categories}")
+
+                for i, category in enumerate(categories):
+                    # Récupérer les quantités et s'assurer que les valeurs sont correctes
+                    quantity_str = quantity_str_list[i] if i < len(quantity_str_list) else '0'
+                    clean_quantity = quantity_str.strip()
+                    quantity = int(clean_quantity) if clean_quantity.isdigit() else 0
+
+                    option_data = {
+                        'designation': designation,
+                        'option_name': category,
+                        'quantity': quantity
+                    }
+
+                    # Ajouter des options spécifiques basées sur la désignation
                     if designation_name in ['IMPRESSION OFFSET', 'IMPRESSION PETIT FORMAT (NUMÉRIQUE)']:
-                        option = Option.objects.create(
-                            designation=designation,
-                            option_name=category,
-                            format=request.POST.getlist(f'formats[{designation_id}][]')[i] if request.POST.getlist(f'formats[{designation_id}][]') else "",
-                            quantity=quantity,
-                            grammage=request.POST.getlist(f'grammages[{designation_id}][]')[i] if request.POST.getlist(f'grammages[{designation_id}][]') else "",
-                            paper_type=request.POST.getlist(f'paper_types[{designation_id}][]')[i] if request.POST.getlist(f'paper_types[{designation_id}][]') else "",
-                            recto_verso=request.POST.getlist(f'recto_versos[{designation_id}][]')[i] if request.POST.getlist(f'recto_versos[{designation_id}][]') else "",
-                            pelliculage_mat=request.POST.get(f'pelliculage_mat[{designation_id}][]') is not None,
-                            pelliculage_brillant=request.POST.get(f'pelliculage_brillant[{designation_id}][]') is not None,
-                            spiral=request.POST.get(f'spiral[{designation_id}][]') is not None,
-                            piquage=request.POST.get(f'piquage[{designation_id}][]') is not None,
-                            collage=request.POST.get(f'collage[{designation_id}][]') is not None,
-                            cousu=request.POST.get(f'cousu[{designation_id}][]') is not None
-                        )
+                        option_data.update({
+                            'format': request.POST.getlist(f'formats[{designation_id}][]')[i] if i < len(request.POST.getlist(f'formats[{designation_id}][]')) else "",
+                            'grammage': request.POST.getlist(f'grammages[{designation_id}][]')[i] if i < len(request.POST.getlist(f'grammages[{designation_id}][]')) else "",
+                            'paper_type': request.POST.getlist(f'paper_types[{designation_id}][]')[i] if i < len(request.POST.getlist(f'paper_types[{designation_id}][]')) else "",
+                            'recto_verso': request.POST.getlist(f'recto_versos[{designation_id}][]')[i] if i < len(request.POST.getlist(f'recto_versos[{designation_id}][]')) else "",
+                            'pelliculage_mat': convert_to_boolean(request.POST.getlist(f'pelliculage_mat[{designation_id}][]')[i]) if i < len(request.POST.getlist(f'pelliculage_mat[{designation_id}][]')) else False,
+                            'pelliculage_brillant': convert_to_boolean(request.POST.getlist(f'pelliculage_brillant[{designation_id}][]')[i]) if i < len(request.POST.getlist(f'pelliculage_brillant[{designation_id}][]')) else False,
+                            'spiral': convert_to_boolean(request.POST.getlist(f'spiral[{designation_id}][]')[i]) if i < len(request.POST.getlist(f'spiral[{designation_id}][]')) else False,
+                            'piquage': convert_to_boolean(request.POST.getlist(f'piquage[{designation_id}][]')[i]) if i < len(request.POST.getlist(f'piquage[{designation_id}][]')) else False,
+                            'collage': convert_to_boolean(request.POST.getlist(f'collage[{designation_id}][]')[i]) if i < len(request.POST.getlist(f'collage[{designation_id}][]')) else False,
+                            'cousu': convert_to_boolean(request.POST.getlist(f'cousu[{designation_id}][]')[i]) if i < len(request.POST.getlist(f'cousu[{designation_id}][]')) else False
+                        })
                     else:
-                        option = Option.objects.create(
-                            designation=designation,
-                            option_name=category,
-                            quantity=quantity,
-                            paragraph=request.POST.getlist(f'paragraphs[{designation_id}][]')[i] if request.POST.getlist(f'paragraphs[{designation_id}][]') else ""
-                        )
+                        option_data.update({
+                            'paragraph': request.POST.getlist(f'paragraphs[{designation_id}][]')[i] if i < len(request.POST.getlist(f'paragraphs[{designation_id}][]')) else ""
+                        })
+                        
+                    # Log des données d'option avant la création
+                    logger.debug(f"Creating Option: {option_data}")
+                    Option.objects.create(**option_data)
 
-        commande.order_status = 'completed'
-        commande.save()
-        article_counter = 1
-        logo_url = request.build_absolute_uri(static('images/logo.png'))
-        output_path = os.path.join(settings.MEDIA_ROOT, f"dossier_travail_{commande.order_id}.pdf")
-        html_content = render_to_string('Application/dossier_travail_template.html', {'commande': commande, 'date': date, 'logo_url': logo_url, 'article_counter': article_counter})
-        create_dossier_travail_pdf(output_path, html_content)
 
-        # Serve the PDF to the user
-        with open(output_path, 'rb') as f:
-            response = HttpResponse(f.read(), content_type='application/pdf')
-            response['Content-Disposition'] = f'attachment; filename="dossier_travail_{commande.order_id}.pdf"'
+            commande.order_status = 'completed'
+            commande.save()
+            article_counter = 1
+            logo_url = request.build_absolute_uri(static('images/logo.png'))
+            output_path = os.path.join(settings.MEDIA_ROOT, f"dossier_travail_{commande.order_id}.pdf")
+            html_content = render_to_string('Application/dossier_travail_template.html', {'commande': commande, 'date': date, 'logo_url': logo_url, 'article_counter': article_counter})
+            create_dossier_travail_pdf(output_path, html_content)
 
-        # Automatically open the PDF on Windows
-        if os.name == 'nt':
-            os.startfile(output_path)
+            # Serve the PDF to the user
+            with open(output_path, 'rb') as f:
+                response = HttpResponse(f.read(), content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="dossier_travail_{commande.order_id}.pdf"'
 
+            # Automatically open the PDF on Windows
+            if os.name == 'nt':
+                os.startfile(output_path)
+        except KeyError as e:
+            logger.error(f"Missing key in POST data: {e}")
+            return HttpResponseBadRequest(f"Données manquantes: {e}")
+        except ValueError as e:
+            logger.error(f"Value error: {e}")
+            return HttpResponseBadRequest(f"Erreur de valeur: {e}")
+        except Exception as e:
+            logger.error(f"Error occurred: {e}")
+            return HttpResponseServerError("Une erreur est survenue.")
         return redirect('liste_commandes')
 
     return render(request, 'Application/designation_commande.html', {'commande': commande})
+
 
 def create_facture_pdf(output_path, commande, date, total_ht, tva_20, total_ttc, bc_number, date_bc, background_image_url, second_background_image_url):
     doc = SimpleDocTemplate(output_path, pagesize=A4)

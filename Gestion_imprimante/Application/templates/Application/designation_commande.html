@@ -233,32 +233,36 @@ function generateCategoryHTML(designation, category, index, designationId) {
 }
 
 function generateImpressionOptions(designationId, index) {
-    return `<div class="row">
-                <div class="form-group col-md-6">
+    return `
+        <div class="row">
+            <div class="form-group col-md-6">
                     <label for="quantity${designationId}_${index}" class="form-label">Quantité:</label>
                     <input type="number" id="quantity${designationId}_${index}" name="quantities[${designationId}][]" class="form-control">
-                </div>
-                <div class="form-group col-md-6">
-                    <label for="format${designationId}_${index}" class="form-label">Format:</label>
-                    <input type="text" id="format${designationId}_${index}" name="formats[${designationId}][]" class="form-control">
-                </div>
-                <div class="form-group col-md-6">
-                    <label for="paper_type${designationId}_${index}" class="form-label">Type de Papier:</label>
-                    <input type="text" id="paper_type${designationId}_${index}" name="paper_types[${designationId}][]" class="form-control">
-                </div>
-                <div class="form-group col-md-6">
-                    <label for="grammage${designationId}_${index}" class="form-label">Grammage:</label>
-                    <input type="text" id="grammage${designationId}_${index}" name="grammages[${designationId}][]" class="form-control">
-                </div>
-                <div class="form-group col-md-6">
-                    <label for="recto_verso${designationId}_${index}" class="form-label">R/RV:</label>
-                    <select id="recto_verso${designationId}_${index}" name="recto_versos[${designationId}][]" class="form-control">
-                        <option value="R">R</option>
-                        <option value="RV">R/V</option>
-                    </select>
-                </div>
-            </div>`;
+            </div>
+            <div class="form-group col-md-6">
+                <label for="format${designationId}_${index}" class="form-label">Format:</label>
+                <input type="text" id="format${designationId}_${index}" name="formats[${designationId}][]" class="form-control" placeholder="Entrez le format">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="paper_type${designationId}_${index}" class="form-label">Type de Papier:</label>
+                <input type="text" id="paper_type${designationId}_${index}" name="paper_types[${designationId}][]" class="form-control" placeholder="Entrez le type de papier">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="grammage${designationId}_${index}" class="form-label">Grammage:</label>
+                <input type="text" id="grammage${designationId}_${index}" name="grammages[${designationId}][]" class="form-control" placeholder="Entrez le grammage">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="recto_verso${designationId}_${index}" class="form-label">R/RV:</label>
+                <select id="recto_verso${designationId}_${index}" name="recto_versos[${designationId}][]" class="form-control">
+                    <option value="">Sélectionner</option>
+                    <option value="Recto">Recto</option>
+                    <option value="Verso">Verso</option>
+                    <option value="Recto-Verso">Recto-Verso</option>
+                </select>
+            </div>
+        </div>`;
 }
+
 
 function generateFinitionOptions(designationId, index) {
     return `<div class="row">
@@ -300,6 +304,7 @@ function generateFinitionOptions(designationId, index) {
                 </div>
             </div>`;
 }
+
 
 function generateGeneralOptions(designationId, index) {
     return `<div class="general-options">

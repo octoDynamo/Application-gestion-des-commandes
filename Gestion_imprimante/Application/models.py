@@ -103,7 +103,7 @@ class Option(models.Model):
     total_ttc = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     grammage = models.CharField(max_length=255, blank=True, null=True)
     paragraph = models.TextField(blank=True, null=True)
-    recto_verso = models.CharField(max_length=2, choices=[('R', 'R'), ('RV', 'R/V')], blank=True, null=True)
+    recto_verso = models.CharField(max_length=255, blank=True, null=True)
     pelliculage_mat = models.BooleanField(default=False)
     pelliculage_brillant = models.BooleanField(default=False)
     spiral = models.BooleanField(default=False)
