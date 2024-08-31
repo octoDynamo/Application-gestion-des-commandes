@@ -1,0 +1,28 @@
+<!-- impression_options.html -->
+<div class="row">
+    <div class="form-group col-md-6">
+        <label for="quantity_{{ designation|slugify }}_{{ category|slugify }}" class="form-label">Quantité:</label>
+        <input type="number" id="quantity_{{ designation|slugify }}_{{ category|slugify }}" name="quantities[{{ designation }}][{{ category }}]" class="form-control">
+    </div>
+    <div class="form-group col-md-6">
+        <label for="format_{{ designation|slugify }}_{{ category|slugify }}" class="form-label">Format:</label>
+        <input type="text" id="format_{{ designation|slugify }}_{{ category|slugify }}" name="formats[{{ designation }}][{{ category }}]" class="form-control" placeholder="Entrez le format">
+    </div>
+    <div class="form-group col-md-6">
+        <label for="paper_type_{{ designation|slugify }}_{{ category|slugify }}" class="form-label">Type de Papier:</label>
+        <input type="text" id="paper_type_{{ designation|slugify }}_{{ category|slugify }}" name="paper_types[{{ designation }}][{{ category }}]" class="form-control" placeholder="Entrez le type de papier">
+    </div>
+    <div class="form-group col-md-6">
+        <label for="grammage_{{ designation|slugify }}_{{ category|slugify }}" class="form-label">Grammage:</label>
+        <input type="text" id="grammage_{{ designation|slugify }}_{{ category|slugify }}" name="grammages[{{ designation }}][{{ category }}]" class="form-control" placeholder="Entrez le grammage">
+    </div>
+    <div class="form-group col-md-6">
+        <label for="recto_verso_{{ designation|slugify }}_{{ category|slugify }}" class="form-label">R/RV:</label>
+        <select id="recto_verso_{{ designation|slugify }}_{{ category|slugify }}" name="recto_versos[{{ designation }}][{{ category }}]" class="form-control">
+            <option value="">Sélectionner</option>
+            <option value="Recto">Recto</option>
+            <option value="Verso">Verso</option>
+            <option value="Recto-Verso">Recto-Verso</option>
+        </select>
+    </div>
+</div>

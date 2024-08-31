@@ -54,7 +54,7 @@ class Devis(models.Model):
     devis_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
-        return f"Devis {self.devis_numero}"
+        return f"Devis {self.devis_numero} pour Commande {self.commande.order_id}"
 
 class Facture(models.Model):
     commande = models.ForeignKey(Commande, related_name='factures', on_delete=models.CASCADE)
@@ -70,7 +70,7 @@ class Facture(models.Model):
     facture_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
-        return f"Facture {self.facture_numero}"
+        return f"Facture {self.facture_numero} pour Commande {self.commande.order_id}"
 
 class BonLivraison(models.Model):
     commande = models.ForeignKey(Commande, related_name='bon_livraison', on_delete=models.CASCADE)
@@ -82,7 +82,7 @@ class BonLivraison(models.Model):
     bl_date = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
-        return f"Bon de Livraison {self.bl_numero}"
+        return f"Bon de Livraison {self.bl_numero} pour Commande {self.commande.order_id}"
 
 class Designation(models.Model):
     name = models.CharField(max_length=255)

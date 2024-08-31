@@ -1,5 +1,5 @@
 from django import forms
-from .models import Commande
+from .models import Commande, Designation
 from .models import Option
 
 class CommandeForm(forms.ModelForm):
@@ -14,3 +14,9 @@ class OptionForm(forms.ModelForm):
         model = Option
         fields = ['option_name', 'format', 'paper_type', 'paragraph', 'grammage', 'recto_verso', 
                   'pelliculage_mat', 'pelliculage_brillant', 'spiral', 'piquage', 'collage', 'cousu', 'quantity', 'unit_price']
+
+class DesignationForm(forms.ModelForm):
+    class Meta:
+        model = Designation
+        fields = ['name']
+

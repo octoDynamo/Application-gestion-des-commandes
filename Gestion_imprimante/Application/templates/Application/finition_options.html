@@ -1,0 +1,39 @@
+<!-- finition_options.html -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="pelliculage_mat_r_{{ designation|slugify }}_{{ category|slugify }}" name="pelliculage_mat[{{ designation }}][{{ category }}][]" value="R">
+            <label class="form-check-label" for="pelliculage_mat_r_{{ designation|slugify }}_{{ category|slugify }}">Pelliculage Mat R</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="pelliculage_mat_rv_{{ designation|slugify }}_{{ category|slugify }}" name="pelliculage_mat[{{ designation }}][{{ category }}][]" value="RV">
+            <label class="form-check-label" for="pelliculage_mat_rv_{{ designation|slugify }}_{{ category|slugify }}">Pelliculage Mat R/V</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="pelliculage_brillant_r_{{ designation|slugify }}_{{ category|slugify }}" name="pelliculage_brillant[{{ designation }}][{{ category }}][]" value="R">
+            <label class="form-check-label" for="pelliculage_brillant_r_{{ designation|slugify }}_{{ category|slugify }}">Pelliculage Brillant R</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="pelliculage_brillant_rv_{{ designation|slugify }}_{{ category|slugify }}" name="pelliculage_brillant[{{ designation }}][{{ category }}][]" value="RV">
+            <label class="form-check-label" for="pelliculage_brillant_rv_{{ designation|slugify }}_{{ category|slugify }}">Pelliculage Brillant R/V</label>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="spiral_{{ designation|slugify }}_{{ category|slugify }}" name="spiral[{{ designation }}][{{ category }}]" value="1">
+            <label class="form-check-label" for="spiral_{{ designation|slugify }}_{{ category|slugify }}">Spiral</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="piquage_{{ designation|slugify }}_{{ category|slugify }}" name="piquage[{{ designation }}][{{ category }}]" value="1">
+            <label class="form-check-label" for="piquage_{{ designation|slugify }}_{{ category|slugify }}">Piquage</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="collage_{{ designation|slugify }}_{{ category|slugify }}" name="collage[{{ designation }}][{{ category }}]" value="1">
+            <label class="form-check-label" for="collage_{{ designation|slugify }}_{{ category|slugify }}">Collage</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="cousu_{{ designation|slugify }}_{{ category|slugify }}" name="cousu[{{ designation }}][{{ category }}]" value="1">
+            <label class="form-check-label" for="cousu_{{ designation|slugify }}_{{ category|slugify }}">Cousu</label>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,206 @@
+{% extends "base_no_nav.html" %}
+{% load custom_filters %}
+{% block title %}Désignation de la Commande{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center header-title mb-4">Désignation de la Commande</h1>
+    <div class="card custom-card">
+        <div class="card-body custom-card-body">
+            <form method="POST" id="designationForm" action="{% url 'designation_commande' pk=commande.pk %}">
+                {% csrf_token %}
+                
+                <div id="designations-container">
+                    <h3>Désignations:</h3>
+                    <div id="designation-list"></div>
+                </div>
+
+                <div id="designation-select-container" style="display: none;">
+                    <div class="form-group mb-4">
+                        <label for="designationSelect"></label>
+                        <div class="input-group">
+                            <select id="designationSelect" name="designation" class="form-control" required>
+                                <option value="">-- Choisir une désignation --</option>
+                                {% for designation in designations %}
+                                    <option value="{{ designation }}">{{ designation }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-danger removeDesignationBtn">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="designation-options-container">
+                    {% for designation in designations %}
+                    <div id="{{ designation|slugify }}-options" class="designation-options" style="display: none;">
+                        {% for category in categories|get_item:designation %}
+                                <div class="card mb-3">
+                                    <div class="card-header bg-light">
+                                        <div class="form-check d-flex justify-content-between align-items-center">
+                                            <label class="form-check-label" for="{{ designation|slugify }}-{{ category|slugify }}">
+                                                {{ category }}
+                                            </label>
+                                            <input class="form-check-input" type="checkbox" id="{{ designation|slugify }}-{{ category|slugify }}" name="categories[]" value="{{ category }}">
+                                        </div>
+                                    </div>
+                                    <div class="card-body category-options" style="display: none;">
+                                        {% if designation == 'IMPRESSION OFFSET' or designation == 'IMPRESSION PETIT FORMAT' %}
+                                            {% include "Application/impression_options.html" with designation=designation category=category %}
+                                            {% include "Application/finition_options.html" with designation=designation category=category %}
+                                        {% else %}
+                                            {% include "Application/general_options.html" with designation=designation category=category %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="button" id="addDesignationBtn" class="btn btn-outline-secondary mt-3">
+                        <i class="fas fa-plus"></i> Ajouter une désignation
+                    </button>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Enregistrer
+                    </button>
+                    <a href="{% url 'liste_commandes' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Annuler
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const designationList = document.getElementById('designation-list');
+    const addDesignationBtn = document.getElementById('addDesignationBtn');
+    const designationSelectContainer = document.getElementById('designation-select-container');
+    const designationOptionsContainer = document.getElementById('designation-options-container');
+    const designationForm = document.getElementById('designationForm');
+    const submitButton = document.querySelector('button[type="submit"]');
+
+    if (submitButton) {
+        submitButton.addEventListener('click', function(event) {
+            event.preventDefault();
+            console.log("Bouton 'Enregistrer' cliqué.");
+
+            const isValid = validateForm();
+            console.log("Résultat de la validation :", isValid);
+
+            if (isValid) {
+                console.log("Formulaire valide, soumission en cours...");
+                designationForm.submit();
+            } else {
+                console.log("Le formulaire est invalide, soumission annulée.");
+                alert('Veuillez vérifier les informations saisies et réessayer.');
+            }
+        });
+    } else {
+        console.log("Bouton de soumission non trouvé");
+    }
+
+    let designationCount = 0;
+
+    addDesignationBtn.addEventListener('click', function() {
+        designationCount++;
+        const newDesignation = designationSelectContainer.cloneNode(true);
+        newDesignation.id = `designation-${designationCount}`;
+        newDesignation.style.display = 'block';
+
+        const newSelect = newDesignation.querySelector('select');
+        newSelect.id = `designationSelect-${designationCount}`;
+        newSelect.name = `designation-${designationCount}`;
+
+        const newRemoveBtn = newDesignation.querySelector('.removeDesignationBtn');
+        newRemoveBtn.id = `removeDesignationBtn-${designationCount}`;
+
+        designationList.appendChild(newDesignation);
+
+        newSelect.addEventListener('change', function(event) {
+            handleDesignationChange(event, designationCount);
+        });
+
+        newRemoveBtn.addEventListener('click', function() {
+            designationList.removeChild(newDesignation);
+            updateDesignationOptions();
+        });
+
+        updateDesignationOptions();
+    });
+
+    function handleDesignationChange(event, designationCount) {
+        const selectedDesignation = event.target.value;
+        updateDesignationOptions();
+        const optionsElement = document.getElementById(`${selectedDesignation.toLowerCase().replace(/ /g, '-')}-options`);
+        if (optionsElement) {
+            optionsElement.style.display = 'block';
+            event.target.closest('.form-group').insertAdjacentElement('afterend', optionsElement);
+        }
+    }
+
+    function updateDesignationOptions() {
+        const selectedDesignations = [];
+
+        document.querySelectorAll('.designation-options').forEach(el => {
+            el.style.display = 'none';
+            designationOptionsContainer.appendChild(el);
+        });
+
+        document.querySelectorAll('#designation-list select').forEach(select => {
+            const selectedDesignation = select.value;
+            if (selectedDesignation && !selectedDesignations.includes(selectedDesignation)) {
+                selectedDesignations.push(selectedDesignation);
+                const optionsElement = document.getElementById(`${selectedDesignation.toLowerCase().replace(/ /g, '-')}-options`);
+                if (optionsElement) {
+                    optionsElement.style.display = 'block';
+                    select.closest('.form-group').insertAdjacentElement('afterend', optionsElement);
+                }
+            }
+        });
+    }
+
+    document.querySelectorAll('.form-check-input[name="categories[]"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const categoryOptions = this.closest('.card').querySelector('.category-options');
+            categoryOptions.style.display = this.checked ? 'block' : 'none';
+        });
+    });
+
+    function validateForm() {
+        let isValid = true;
+
+        const designationSelects = document.querySelectorAll('#designation-list select');
+        if (designationSelects.length === 0) {
+            isValid = false;
+            console.log('Aucune désignation sélectionnée');
+        }
+
+        designationSelects.forEach(select => {
+            const selectedDesignation = select.value;
+            if (selectedDesignation) {
+                const categoryCheckboxes = document.querySelectorAll(`#${selectedDesignation.toLowerCase().replace(/ /g, '-')}-options .form-check-input[name="categories[]"]:checked`);
+                if (categoryCheckboxes.length === 0) {
+                    isValid = false;
+                    console.log(`Aucune catégorie sélectionnée pour la désignation ${selectedDesignation}`);
+                }
+            }
+        });
+
+        return isValid;
+    }
+});
+
+</script>
+    
+    
+    
+{% endblock %}

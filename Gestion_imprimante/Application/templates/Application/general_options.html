@@ -1,0 +1,11 @@
+<!-- general_options.html -->
+<div class="general-options">
+    <div class="form-group">
+        <label for="quantity_{{ designation|slugify }}_{{ category|slugify }}" class="form-label">Quantité:</label>
+        <input type="number" id="quantity_{{ designation|slugify }}_{{ category|slugify }}" name="quantities[{{ designation }}][{{ category }}]" class="form-control">
+    </div>
+    <div class="form-group">
+        <label for="designation_{{ designation|slugify }}_{{ category|slugify }}" class="form-label">Désignation:</label>
+        <textarea id="designation_{{ designation|slugify }}_{{ category|slugify }}" name="paragraphs[{{ designation }}][{{ category }}]" class="form-control"></textarea>
+    </div>
+</div>

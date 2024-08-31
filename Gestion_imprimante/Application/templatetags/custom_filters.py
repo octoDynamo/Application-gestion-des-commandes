@@ -20,3 +20,7 @@ def multiply(value, arg):
 @register.filter
 def default_zero(value):
     return value if value is not None else 0
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key, [])

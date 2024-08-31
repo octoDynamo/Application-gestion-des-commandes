@@ -21,7 +21,7 @@ from reportlab.lib.units import cm
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
+
 
 def login_view(request):
     if request.method == 'POST':
@@ -575,92 +575,152 @@ def create_dossier_travail_pdf(output_path, html_content):
 # Function to convert form data to boolean
 def convert_to_boolean(value):
     return value.lower() in ['on', 'true', '1']
+logger = logging.getLogger(__name__)
 
 def designation_commande(request, pk):
     commande = get_object_or_404(Commande, pk=pk)
     date = datetime.now().strftime('%d/%m/%y')
+    designations = [
+        'IMPRESSION OFFSET',
+        'IMPRESSION GRAND FORMAT',
+        'IMPRESSION PETIT FORMAT',
+        'IMPRESSION UV',
+        'DECOUPE LASER PETIT ET GRAND FORMAT',
+        'DECOUPE CNC GRAND FORMAT',
+        'DECOUPE ADHESIF',
+        'IMPRESSION TOMPOGRAPHIE DEUX COULEURS'
+    ]
 
+    categories = {
+        'IMPRESSION OFFSET': [
+            'Impression sur Papier', 'Impression sur Enveloppe', 'Impression sur Calque', 
+            'Impression sur Autocollant', 'CV', 'P. entêtes', 'Chemises', 'Envelloppes', 
+            'Flyers', 'Affiches', 'Invitations', 'Dépliants', 'Etiquettes', 'Pochettes CD', 
+            'Menus', 'Carnets (Int.)', 'Carnets (Couv.)', 'Calendriers', 'Sous-main', 'Sacs',
+            'Boites', 'Livres (Int.)', 'Livres (Couv.)', 'Jackets CD', 'Bloc Note (Int.)',
+            'Bloc Note (Couv.)'
+        ],
+        'IMPRESSION GRAND FORMAT': [
+            'Impression sur Bâche', 'Impression sur Vinyle', 'Impression sur Papier', 
+            'Impression sur One Way', 'Impression sur Canvas'
+        ],
+        'IMPRESSION PETIT FORMAT': [
+            'Impression sur Papier', 'Impression sur Enveloppe', 'Impression sur Calque', 
+            'Impression sur Autocollant', 'CV', 'P. entêtes', 'Chemises', 'Envelloppes', 
+            'Flyers', 'Affiches', 'Invitations', 'Dépliants', 'Etiquettes', 'Pochettes CD', 
+            'Menus', 'Carnets (Int.)', 'Carnets (Couv.)', 'Calendriers', 'Sous-main', 'Sacs',
+            'Boites', 'Livres (Int.)', 'Livres (Couv.)', 'Jackets CD', 'Bloc Note (Int.)',
+            'Bloc Note (Couv.)'
+        ],
+        'IMPRESSION UV': [
+            'Impression sur du Bois', 'Impression sur Métal', 'Impression sur Plastique', 
+            'Impression sur Verre'
+        ],
+        'DECOUPE LASER PETIT ET GRAND FORMAT': [
+            'Découpe et gravure sur Bois', 'Découpe et gravure sur Métal', 
+            'Découpe et gravure sur Plastique', 'Gravure sur Verre'
+        ],
+        'DECOUPE CNC GRAND FORMAT': [
+            'Découpe et gravure sur Bois', 'Découpe et gravure sur Plastique', 
+            'Découpe et gravure sur Alucobond'
+        ],
+        'DECOUPE ADHESIF': [
+            'Découpe sur autocollant Brillant', 'Découpe sur autocollant Mat', 
+            'Découpe sur Flex', 'Découpe sur Adhésif'
+        ],
+        'IMPRESSION TOMPOGRAPHIE DEUX COULEURS': [
+            'Impression sur du Bois', 'Impression sur Métal', 'Impression sur Plastique', 
+            'Impression sur Verre'
+        ]
+    }
     if request.method == 'POST':
+        logger.debug("POST request received")
+        designation = request.POST.get('designation')
+        if not designation:
+            messages.error(request, "Veuillez sélectionner une désignation.")
+            logger.error("No designation provided")
+            return redirect('designation_commande', pk=pk)
+
+        selected_categories = request.POST.getlist('categories[]')
+        logger.debug(f"Selected categories: {selected_categories}")
+        
         try:
             # Supprimer les désignations existantes pour la commande
+            logger.debug("Deleting existing designations")
             commande.designations.all().delete()
 
-            designations = request.POST.getlist('designations[]')
+            new_designation = Designation.objects.create(name=designation, commande=commande)
+            logger.debug(f"New designation created: {new_designation}")
 
-            if not designations:
-                return HttpResponseBadRequest("Aucune désignation fournie.")
-        
-            for designation_id, designation_name in enumerate(designations):
-                designation = Designation.objects.create(name=designation_name, commande=commande)
-                categories = request.POST.getlist(f'categories[{designation_id}][]')
-                quantity_str_list = request.POST.getlist(f'quantities[{designation_id}][]')
+            for category in selected_categories:
+                quantity = request.POST.get(f'quantities[{designation}][{category}]', 0)
+                if not quantity:
+                    continue  # Ignorer les catégories sans quantité
 
-                logger.debug(f"Categories for designation {designation_name}: {categories}")
+                option_data = {
+                    'designation': new_designation,
+                    'option_name': category,
+                    'quantity': quantity
+                }
 
-                for i, category in enumerate(categories):
-                    # Récupérer les quantités et s'assurer que les valeurs sont correctes
-                    quantity_str = quantity_str_list[i] if i < len(quantity_str_list) else '0'
-                    clean_quantity = quantity_str.strip()
-                    quantity = int(clean_quantity) if clean_quantity.isdigit() else 0
+                if designation in ['IMPRESSION OFFSET', 'IMPRESSION PETIT FORMAT']:
+                    option_data.update({
+                        'format': request.POST.get(f'formats[{designation}][{category}]', ''),
+                        'paper_type': request.POST.get(f'paper_types[{designation}][{category}]', ''),
+                        'grammage': request.POST.get(f'grammages[{designation}][{category}]', ''),
+                        'recto_verso': request.POST.get(f'recto_versos[{designation}][{category}]', ''),
+                        'pelliculage_mat': 'R' in request.POST.getlist(f'pelliculage_mat[{designation}][{category}][]', []),
+                        'pelliculage_brillant': 'R' in request.POST.getlist(f'pelliculage_brillant[{designation}][{category}][]', []),
+                        'spiral': request.POST.get(f'spiral[{designation}][{category}]') == '1',
+                        'piquage': request.POST.get(f'piquage[{designation}][{category}]') == '1',
+                        'collage': request.POST.get(f'collage[{designation}][{category}]') == '1',
+                        'cousu': request.POST.get(f'cousu[{designation}][{category}]') == '1'
+                    })
+                else:
+                    option_data['paragraph'] = request.POST.get(f'paragraphs[{designation}][{category}]', '')
+                
+                logger.debug(f"Creating option with data: {option_data}")
+                Option.objects.create(**option_data)
 
-                    option_data = {
-                        'designation': designation,
-                        'option_name': category,
-                        'quantity': quantity
-                    }
-
-                    # Ajouter des options spécifiques basées sur la désignation
-                    if designation_name in ['IMPRESSION OFFSET', 'IMPRESSION PETIT FORMAT (NUMÉRIQUE)']:
-                        option_data.update({
-                            'format': request.POST.getlist(f'formats[{designation_id}][]')[i] if i < len(request.POST.getlist(f'formats[{designation_id}][]')) else "",
-                            'grammage': request.POST.getlist(f'grammages[{designation_id}][]')[i] if i < len(request.POST.getlist(f'grammages[{designation_id}][]')) else "",
-                            'paper_type': request.POST.getlist(f'paper_types[{designation_id}][]')[i] if i < len(request.POST.getlist(f'paper_types[{designation_id}][]')) else "",
-                            'recto_verso': request.POST.getlist(f'recto_versos[{designation_id}][]')[i] if i < len(request.POST.getlist(f'recto_versos[{designation_id}][]')) else "",
-                            'pelliculage_mat': convert_to_boolean(request.POST.getlist(f'pelliculage_mat[{designation_id}][]')[i]) if i < len(request.POST.getlist(f'pelliculage_mat[{designation_id}][]')) else False,
-                            'pelliculage_brillant': convert_to_boolean(request.POST.getlist(f'pelliculage_brillant[{designation_id}][]')[i]) if i < len(request.POST.getlist(f'pelliculage_brillant[{designation_id}][]')) else False,
-                            'spiral': convert_to_boolean(request.POST.getlist(f'spiral[{designation_id}][]')[i]) if i < len(request.POST.getlist(f'spiral[{designation_id}][]')) else False,
-                            'piquage': convert_to_boolean(request.POST.getlist(f'piquage[{designation_id}][]')[i]) if i < len(request.POST.getlist(f'piquage[{designation_id}][]')) else False,
-                            'collage': convert_to_boolean(request.POST.getlist(f'collage[{designation_id}][]')[i]) if i < len(request.POST.getlist(f'collage[{designation_id}][]')) else False,
-                            'cousu': convert_to_boolean(request.POST.getlist(f'cousu[{designation_id}][]')[i]) if i < len(request.POST.getlist(f'cousu[{designation_id}][]')) else False
-                        })
-                    else:
-                        option_data.update({
-                            'paragraph': request.POST.getlist(f'paragraphs[{designation_id}][]')[i] if i < len(request.POST.getlist(f'paragraphs[{designation_id}][]')) else ""
-                        })
-                        
-                    # Log des données d'option avant la création
-                    logger.debug(f"Creating Option: {option_data}")
-                    Option.objects.create(**option_data)
-
-
+            # Mettre à jour le statut de la commande
             commande.order_status = 'completed'
             commande.save()
+            logger.debug(f"Commande status updated to 'completed'")
+
+            messages.success(request, "La commande a été enregistrée avec succès.")
+
+            # Générer le PDF
             article_counter = 1
             logo_url = request.build_absolute_uri(static('images/logo.png'))
             output_path = os.path.join(settings.MEDIA_ROOT, f"dossier_travail_{commande.order_id}.pdf")
             html_content = render_to_string('Application/dossier_travail_template.html', {'commande': commande, 'date': date, 'logo_url': logo_url, 'article_counter': article_counter})
             create_dossier_travail_pdf(output_path, html_content)
+            logger.debug(f"PDF generated at {output_path}")
+
 
             # Serve the PDF to the user
             with open(output_path, 'rb') as f:
                 response = HttpResponse(f.read(), content_type='application/pdf')
                 response['Content-Disposition'] = f'attachment; filename="dossier_travail_{commande.order_id}.pdf"'
+            logger.debug("PDF served to user")
 
             # Automatically open the PDF on Windows
             if os.name == 'nt':
                 os.startfile(output_path)
-        except KeyError as e:
-            logger.error(f"Missing key in POST data: {e}")
-            return HttpResponseBadRequest(f"Données manquantes: {e}")
-        except ValueError as e:
-            logger.error(f"Value error: {e}")
-            return HttpResponseBadRequest(f"Erreur de valeur: {e}")
-        except Exception as e:
-            logger.error(f"Error occurred: {e}")
-            return HttpResponseServerError("Une erreur est survenue.")
-        return redirect('liste_commandes')
 
-    return render(request, 'Application/designation_commande.html', {'commande': commande})
+            return redirect('liste_commandes')
+
+        except Exception as e:
+            messages.error(request, f"Une erreur s'est produite lors de l'enregistrement : {str(e)}")
+            return redirect('designation_commande', pk=pk)
+
+    context = {
+        'commande': commande,
+        'designations': designations,
+        'categories': categories,
+        'date': date,
+    }
+    return render(request, 'Application/designation_commande.html',context)
 
 
 def create_facture_pdf(output_path, commande, date, total_ht, tva_20, total_ttc, bc_number, date_bc, background_image_url, second_background_image_url):
